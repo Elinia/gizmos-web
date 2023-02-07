@@ -1,0 +1,5 @@
+{
+  "cSpell.words": ["buildable"],
+  "typescript.tsdk": "node_modules\\typescript\\lib",
+  "prettier.htmlWhitespaceSensitivity": "ignore"
+}

@@ -1,0 +1,26 @@
+{
+  "name": "gizmos-env",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    "./*": {
+      "types": "./dist/*.d.ts",
+      "import": "./dist/*.js"
+    }
+  },
+  "scripts": {
+    "dev": "vite",
+    "test": "vitest",
+    "build": "tsc --incremental && vite build"
+  },
+  "devDependencies": {
+    "typescript": "^4.9.5",
+    "vite": "^4.0.4",
+    "vite-plugin-dts": "^1.7.2",
+    "vitest": "^0.28.3"
+  }
+}
