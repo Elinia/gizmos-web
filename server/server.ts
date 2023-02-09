@@ -32,6 +32,11 @@ function getEnv() {
   return globalEnv
 }
 
+function broadcastAction(socket: Socket, action: Action) {
+  const info = getPlayerInfo(socket.id)
+  io.of('/player').emit('action', { name: info.name, action })
+}
+
 function broadcastObservation() {
   const env = getEnv()
   playersSocketID.forEach((id, i) => {
@@ -122,6 +127,7 @@ io.of('/player').on('connection', socket => {
     console.log(`[action]: ${playersSocketID.indexOf(socket.id)}`, action)
     env.step(playersSocketID.indexOf(socket.id), action)
     broadcastObservation()
+    broadcastAction(socket, action)
     if (env.state.curr_stage === Stage.GAME_OVER) {
       endGame()
     }

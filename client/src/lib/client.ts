@@ -32,6 +32,8 @@ export class GizmosClient {
     player_list => player_list.find(p => p.me)?.index
   )
 
+  log = writable<string[]>([])
+
   login = (name: string) => {
     this.socket.emit('login', { name })
   }
@@ -206,14 +208,25 @@ export class GizmosClient {
           alert('internal error')
           return
         }
-        alert('GAME OVER!')
-        alert(
-          `Score:\n${observation.players
-            .map((p, i) => `${get(this.player_list)[i].name}: ${p.score}`)
-            .join('\n')}`
-        )
+        this.log.update(log => {
+          log.push('GAME OVER!')
+          log.push('Score:')
+          observation.players.forEach((p, i) =>
+            log.push(`${get(this.player_list)[i].name}: ${p.score}`)
+          )
+          return log
+        })
       }
     })
+    this.socket.on(
+      'action',
+      ({ name, action }: { name: string; action: Action }) => {
+        this.log.update(log => {
+          log.push(`${name}: ${JSON.stringify(action)}`)
+          return log
+        })
+      }
+    )
     this.socket.on('start', (player_list: PlayerList) => {
       this.game_ongoing.set(true)
       this.player_list.set(player_list)

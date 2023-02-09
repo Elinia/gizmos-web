@@ -14,6 +14,7 @@
 
   const client = new GizmosClient()
   const {
+    log,
     socket_status,
     game_ongoing,
     room_info,
@@ -428,6 +429,11 @@
     </form>
   </dialog>
 {/if}
+<div class="log">
+  {#each $log as msg}
+    <div>{msg}</div>
+  {/each}
+</div>
 
 <style lang="postcss">
   .status-red {
@@ -457,5 +463,8 @@
   }
   .avail {
     @apply outline outline-2 outline-red-500/50 -outline-offset-1;
+  }
+  .log {
+    @apply resize-y h-80 m-2 p-2 overflow-auto bg-lime-100;
   }
 </style>
