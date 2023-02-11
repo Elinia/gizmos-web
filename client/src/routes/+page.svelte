@@ -37,6 +37,7 @@
     use_gizmo_id,
     give_up,
     end,
+    sample,
   } = client
 
   $: console.log($observation, $env)
@@ -94,6 +95,16 @@
   onDestroy(() => {
     client.destroy()
   })
+
+  let auto = false
+  $: if (
+    auto &&
+    $env &&
+    $player_index === $observation?.curr_player_index &&
+    $env.avail_actions.length > 0
+  ) {
+    setTimeout(() => sample(), 100)
+  }
 </script>
 
 <div>
@@ -103,6 +114,10 @@
   >
     {$socket_status}
   </span>
+</div>
+<div>
+  auto
+  <input type="checkbox" bind:value={auto} />
 </div>
 {#if !$observation}
   <input bind:value={name} />

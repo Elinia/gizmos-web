@@ -180,6 +180,13 @@ export class GizmosClient {
     this.step({ type: ActionType.END })
   }
 
+  sample = () => {
+    const env = get(this.env)
+    if (!env) return
+    const action = env.sample()
+    this.step(action)
+  }
+
   destroy = () => {
     this.socket.disconnect()
   }
