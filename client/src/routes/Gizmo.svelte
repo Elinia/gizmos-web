@@ -106,6 +106,12 @@
             <span>-{info.build_from_research_cost_reduction}</span>
           </div>
         {/if}
+        {#if info.max_file_num < 0}
+          <div>🚫📁</div>
+        {/if}
+        {#if info.research_num < 0}
+          <div>🚫🔍</div>
+        {/if}
       </div>
     {:else if is_pick_gizmo_info(info)}
       <div class="flex">
