@@ -62,7 +62,7 @@
     const common_params = [
       build_dialog.index,
       solution.energy_num,
-      solution.gizmos.map(g => me.gizmos.indexOf(g)),
+      solution.gizmos.map(g => me.gizmos.findIndex(_g => g.id === _g.id)),
     ] as const
     switch (build_dialog.method) {
       case BuildMethod.DIRECTLY:
