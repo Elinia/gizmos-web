@@ -119,6 +119,7 @@ io.of('/player').on('connection', socket => {
 
   socket.on('action', (action: Action) => {
     const env = getEnv()
+    console.log(`[action]: ${playersSocketID.indexOf(socket.id)}`, action)
     env.step(playersSocketID.indexOf(socket.id), action)
     broadcastObservation()
     if (env.state.curr_stage === Stage.GAME_OVER) {
