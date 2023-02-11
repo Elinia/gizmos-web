@@ -480,12 +480,15 @@ export class GizmosEnv {
   }
 
   step(playerIndex: number, action: Action) {
+    console.time('step')
     try {
       if (playerIndex !== this.state.curr_player_index) {
-        throw new Error('not your turn')
+        console.error('[step] not your turn')
+        return
       }
       if (!this.avail_actions.includes(action.type)) {
-        throw new Error('unexpected action type')
+        console.error('[step] unexpected action type')
+        return
       }
       switch (action.type) {
         case ActionType.PICK:
@@ -538,7 +541,8 @@ export class GizmosEnv {
           this.next_player()
           return
         default:
-          throw new Error('unexpected action type')
+          console.error('[step] unexpected action type')
+          return
       }
       if (this.is_energy_overflow) {
         this.state.curr_stage = Stage.DROP
@@ -558,6 +562,7 @@ export class GizmosEnv {
       this.truncated = true
       this.state.curr_stage = Stage.GAME_OVER
     }
+    console.timeEnd('step')
   }
 
   u_gizmo(id: number) {
