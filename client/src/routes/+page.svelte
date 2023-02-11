@@ -228,8 +228,10 @@
       <div>{label}:</div>
       <div class="gizmos-simple">
         {#each gizmos as gizmo}
+          {@const can_use = $is_avail[ActionType.USE_GIZMO] && gizmo.active}
           <button
-            class:avail={$is_avail[ActionType.USE_GIZMO] && gizmo.active}
+            class:avail={can_use}
+            disabled={!can_use}
             on:click={() => use_gizmo_id(gizmo.id)}
           >
             <Gizmo info={gizmo} />
