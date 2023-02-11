@@ -18,6 +18,7 @@
     game_ongoing,
     room_info,
     player_list,
+    player_index,
     me,
     login,
     ready,
@@ -80,8 +81,11 @@
   }
 
   let research_dialog_element: HTMLDialogElement
-  $: if ($observation?.researching) {
+  $: if (research_dialog_element && $observation?.researching) {
     research_dialog_element.showModal()
+  }
+  $: if (research_dialog_element && !$observation?.researching) {
+    research_dialog_element.close()
   }
 
   $: if (build_dialog_element) {
@@ -146,7 +150,7 @@
   </div>
 
   <div>Point token: {$me.point_token}</div>
-  <div class:avail={$is_avail[ActionType.DROP]}>
+  <div class="flex gap-2" class:avail={$is_avail[ActionType.DROP]}>
     <div class="energy">
       Energy ({$me.total_energy_num -
         total_drop_energy_num}/{$me.max_energy_num}):
@@ -162,6 +166,8 @@
       {/each}
     </div>
     {#if $is_avail[ActionType.DROP]}
+      {@const ready_to_drop =
+        $me.total_energy_num - total_drop_energy_num === $me.max_energy_num}
       <div class="energy">
         Drop energy:
         {#each ALL_ENERGY_TYPES as energy}
@@ -173,9 +179,13 @@
             />
           {/each}
         {/each}
-        {#if $me.total_energy_num - total_drop_energy_num === $me.max_energy_num}
-          <button on:click={() => drop()}>Drop</button>
-        {/if}
+        <button
+          class:avail={ready_to_drop}
+          disabled={!ready_to_drop}
+          on:click={() => drop()}
+        >
+          Drop
+        </button>
       </div>
     {/if}
   </div>
@@ -190,24 +200,23 @@
           ? $env.build_solutions(gizmo, BuildMethod.FROM_FILED)
           : []}
         {@const can_build = solutions.length > 0}
-        <div class:avail={can_build}>
-          {#if can_build}
-            <button
-              class:avail={can_build}
-              on:click={() => {
-                build_dialog = {
-                  level: gizmo.level,
-                  index,
-                  method: BuildMethod.FROM_FILED,
-                  solutions,
-                }
-                build_dialog_element.showModal()
-              }}
-            >
-              🔧
-            </button>
-          {/if}
+        <div>
           <Gizmo info={gizmo} />
+          <button
+            class:avail={can_build}
+            disabled={!can_build}
+            on:click={() => {
+              build_dialog = {
+                level: gizmo.level,
+                index,
+                method: BuildMethod.FROM_FILED,
+                solutions,
+              }
+              build_dialog_element.showModal()
+            }}
+          >
+            🔧
+          </button>
         </div>
       {/each}
     </div>
@@ -273,11 +282,12 @@
           {@const solutions = $is_avail[ActionType.BUILD]
             ? $env.build_solutions(g.id, BuildMethod.DIRECTLY)
             : []}
+          {@const can_build = solutions.length > 0}
           <div>
             <Gizmo info={g} />
             <button
-              class:avail={solutions.length > 0}
-              disabled={solutions.length <= 0}
+              class:avail={can_build}
+              disabled={!can_build}
               on:click={() => {
                 build_dialog = {
                   level,
@@ -355,10 +365,10 @@
                   <span>{energy}: {solution.energy_num[energy]}</span>
                 {/each}
               </div>
-              <div class="gizmos">
+              <div class="gizmos-simple">
                 Used gizmos:
                 {#each solution.gizmos as gizmo}
-                  <Gizmo info={gizmo} />
+                  <Gizmo info={gizmo} simple={true} />
                 {/each}
               </div>
             </button>
@@ -379,49 +389,37 @@
               ? $env.build_solutions(gizmo, BuildMethod.FROM_RESEARCH)
               : []}
             {@const can_build = solutions.length > 0}
-            <div
-              class:avail={can_build ||
-                $is_avail[ActionType.FILE_FROM_RESEARCH]}
-            >
-              {#if can_build}
-                <button
-                  on:click={() => {
-                    build_dialog = {
-                      level,
-                      index,
-                      method: BuildMethod.FROM_RESEARCH,
-                      solutions,
-                    }
-                    build_dialog_element.showModal()
-                  }}
-                >
-                  🔧
-                </button>
-              {/if}
-              {#if $is_avail[ActionType.FILE_FROM_RESEARCH]}
-                <button
-                  on:click={() => {
-                    file_from_research(index)
-                    research_dialog_element.close()
-                  }}
-                >
-                  📁
-                </button>
-              {/if}
+            {@const can_file = $is_avail[ActionType.FILE_FROM_RESEARCH]}
+            <div>
               <Gizmo info={gizmo} />
+              <button
+                class:avail={can_build}
+                disabled={!can_build}
+                on:click={() => {
+                  build_dialog = {
+                    level,
+                    index,
+                    method: BuildMethod.FROM_RESEARCH,
+                    solutions,
+                  }
+                  build_dialog_element.showModal()
+                }}
+              >
+                🔧
+              </button>
+              <button
+                class:avail={can_file}
+                disabled={!can_file}
+                on:click={() => file_from_research(index)}
+              >
+                📁
+              </button>
             </div>
           {/each}
         </div>
       {/if}
       {#if $is_avail[ActionType.GIVE_UP]}
-        <button
-          class="avail"
-          value="cancel"
-          on:click={() => {
-            give_up()
-            research_dialog_element.close()
-          }}
-        >
+        <button class="avail" value="cancel" on:click={() => give_up()}>
           Give up research
         </button>
       {/if}
@@ -446,7 +444,7 @@
   .energy,
   .gizmos,
   .gizmos-simple {
-    @apply flex gap-2;
+    @apply flex gap-2 flex-wrap;
   }
   .gizmos {
     @apply h-[72px];
