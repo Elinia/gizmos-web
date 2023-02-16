@@ -24,7 +24,7 @@ export function file_draw_level0() {
     energy_cost: 0,
     value: 0,
     effect: {
-      type: 'draw_from_pool',
+      type: 'free_draw',
       num: 1,
     },
   })
@@ -121,7 +121,7 @@ export function pick_draw_level1(energy_type: Energy, pick_energy: Energy) {
     energy_type,
     when_pick: [pick_energy],
     effect: {
-      type: 'draw_from_pool',
+      type: 'free_draw',
       num: 1,
     },
   })
@@ -308,7 +308,7 @@ export function pick_draw_level2(energy_type: Energy, pick_energy: Energy[]) {
     energy_type,
     when_pick: pick_energy,
     effect: {
-      type: 'draw_from_pool',
+      type: 'free_draw',
       num: 1,
     },
   })
@@ -459,7 +459,7 @@ export function file_draw_level3(energy_type: Energy) {
     ...level3_common(4),
     energy_type,
     effect: {
-      type: 'draw_from_pool',
+      type: 'free_draw',
       num: 3,
     },
   })

@@ -1,6 +1,5 @@
 import type { Socket } from 'socket.io-client'
 import { Stage, type Energy, type GizmoLevel } from 'gizmos-env/common'
-import { init_energy_num } from 'gizmos-env/gizmos_utils'
 import {
   ActionType,
   GizmosEnv,
@@ -22,8 +21,13 @@ type RoomInfo = { name: string; ready: boolean }[]
 export class GizmosClient {
   socket: Socket
   socket_status = writable<'green' | 'red' | 'pending'>('pending')
+  pending = writable(false)
 
+  private name = writable('')
   room_info = writable<RoomInfo>([])
+  in_room = derived([this.name, this.room_info], ([$name, $room_info]) => {
+    return $room_info.some(({ name }) => name === $name)
+  })
   game_ongoing = writable(false)
 
   player_list = writable<PlayerList>([])
@@ -35,6 +39,8 @@ export class GizmosClient {
   log = writable<string[]>([])
 
   login = (name: string) => {
+    // FIXME: not robust to get name here
+    this.name.set(name)
     this.socket.emit('login', { name })
   }
 
@@ -44,7 +50,6 @@ export class GizmosClient {
 
   observation = writable<Observation | null>(null)
   env = writable<GizmosEnv | null>(null)
-  drop_energy_num = writable(init_energy_num())
 
   me = derived(
     [this.observation, this.player_index],
@@ -57,6 +62,7 @@ export class GizmosClient {
   )
 
   private step = (action: Action) => {
+    this.pending.set(true)
     this.socket.emit('action', action)
   }
 
@@ -72,76 +78,60 @@ export class GizmosClient {
     return is_avail_map
   })
 
-  pick = (index: number) => {
+  pick = (energy: Energy) => {
     if (!get(this.is_avail)[ActionType.PICK]) return
-    this.step({ type: ActionType.PICK, index })
+    this.step({ type: ActionType.PICK, energy })
   }
 
-  select_drop = (energy: Energy, num = 1) => {
-    if (!get(this.is_avail)[ActionType.DROP]) return
-    this.drop_energy_num.update(drop_energy_num => ({
-      ...drop_energy_num,
-      [energy]: drop_energy_num[energy] + num,
-    }))
-  }
-
-  drop = () => {
-    if (!get(this.is_avail)[ActionType.DROP]) return
-    this.step({ type: ActionType.DROP, energy_num: get(this.drop_energy_num) })
-    this.drop_energy_num.set(init_energy_num())
-  }
-
-  file = (level: GizmoLevel, index: number) => {
+  file = (id: number) => {
     if (!get(this.is_avail)[ActionType.FILE]) return
-    this.step({ type: ActionType.FILE, level, index })
+    this.step({ type: ActionType.FILE, id })
   }
 
-  file_from_research = (index: number) => {
+  file_from_research = (id: number) => {
     if (!get(this.is_avail)[ActionType.FILE_FROM_RESEARCH]) return
-    this.step({ type: ActionType.FILE_FROM_RESEARCH, index })
+    this.step({ type: ActionType.FILE_FROM_RESEARCH, id })
   }
 
   build = (
-    level: GizmoLevel,
-    index: number,
+    id: number,
     cost_energy_num: Record<Energy, number>,
-    cost_converter_gizmos_index: number[]
+    cost_converter_gizmos_id: number[]
   ) => {
     if (!get(this.is_avail)[ActionType.BUILD]) return
     this.step({
       type: ActionType.BUILD,
-      level,
-      index,
+      id,
       cost_energy_num,
-      cost_converter_gizmos_index,
+      cost_converter_gizmos_id,
     })
   }
 
-  build_from_file = (
-    index: number,
+  build_from_filed = (
+    id: number,
     cost_energy_num: Record<Energy, number>,
-    cost_converter_gizmos_index: number[]
+    cost_converter_gizmos_id: number[]
   ) => {
     if (!get(this.is_avail)[ActionType.BUILD_FROM_FILED]) return
     this.step({
       type: ActionType.BUILD_FROM_FILED,
-      index,
+      id,
       cost_energy_num,
-      cost_converter_gizmos_index,
+      cost_converter_gizmos_id,
     })
   }
 
   build_from_research = (
-    index: number,
+    id: number,
     cost_energy_num: Record<Energy, number>,
-    cost_converter_gizmos_index: number[]
+    cost_converter_gizmos_id: number[]
   ) => {
     if (!get(this.is_avail)[ActionType.BUILD_FROM_RESEARCH]) return
     this.step({
       type: ActionType.BUILD_FROM_RESEARCH,
-      index,
+      id,
       cost_energy_num,
-      cost_converter_gizmos_index,
+      cost_converter_gizmos_id,
     })
   }
 
@@ -153,23 +143,9 @@ export class GizmosClient {
     })
   }
 
-  use_gizmo = (index: number) => {
+  use_gizmo = (id: number) => {
     if (!get(this.is_avail)[ActionType.USE_GIZMO]) return
-    this.step({ type: ActionType.USE_GIZMO, index })
-  }
-
-  use_gizmo_id = (id: number) => {
-    const me = get(this.me)
-    if (!me) {
-      alert('not in game')
-      return
-    }
-    const index = me.gizmos.findIndex(g => g.id === id)
-    if (index < 0) {
-      alert('unexpected gizmo used')
-      return
-    }
-    this.use_gizmo(index)
+    this.step({ type: ActionType.USE_GIZMO, id })
   }
 
   give_up = () => {
@@ -187,6 +163,7 @@ export class GizmosClient {
     if (!env) return
     const action = env.sample()
     this.step(action)
+    return action
   }
 
   destroy = () => {
@@ -200,9 +177,12 @@ export class GizmosClient {
     })
     this.socket.on('observation', (observation: Observation) => {
       this.observation.set(observation)
-      const new_env = new GizmosEnv(get(this.player_list).length)
+      const new_env = new GizmosEnv({
+        player_num: get(this.player_list).length,
+      })
       new_env.simulation(observation)
       this.env.set(new_env)
+      this.pending.set(false)
       if (observation.curr_stage === Stage.GAME_OVER) {
         if (observation.truncated) {
           alert('internal error')

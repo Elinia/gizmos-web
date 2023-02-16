@@ -52,7 +52,7 @@ function broadcastRoom() {
 }
 
 function startGame() {
-  globalEnv = new GizmosEnv(playersInfo.size)
+  globalEnv = new GizmosEnv({ player_num: playersInfo.size })
   globalEnv.reset()
   playersSocketID = shuffle(Array.from(playersInfo).map(([id]) => id))
   Array.from(playersInfo).forEach(([id]) => {
@@ -119,7 +119,7 @@ io.of('/player').on('connection', socket => {
     info.ready = !info.ready
     broadcastRoom()
     if (
-      playersInfo.size >= 2 &&
+      playersInfo.size >= 1 &&
       Array.from(playersInfo).every(([, info]) => info.ready)
     ) {
       startGame()

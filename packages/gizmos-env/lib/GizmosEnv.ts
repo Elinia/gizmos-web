@@ -15,8 +15,7 @@ import {
 } from './gizmos_pool'
 import type { Gizmo, GizmoInfo } from './Gizmo'
 import { Player, type PlayerInfo } from './Player'
-import { random_int, sample, shuffle } from './utils'
-import { init_energy_num } from './gizmos_utils'
+import { sample, shuffle } from './utils'
 
 function init_player(env: GizmosEnv, index: number) {
   return new Player({ env, index, gizmos: [env.u_gizmo(index)] })
@@ -52,51 +51,27 @@ export enum ActionType {
   BUILD_FROM_FILED = 'BUILD_FROM_FILED',
   BUILD_FOR_FREE = 'BUILD_FOR_FREE',
   RESEARCH = 'RESEARCH',
-  DROP = 'DROP',
+  CHOOSE_TRIGGER = 'CHOOSE_TRIGGER',
   USE_GIZMO = 'USE_GIZMO',
   GIVE_UP = 'GIVE_UP',
   END = 'END',
 }
+export type ActionBuildSolution = {
+  id: number
+  cost_energy_num: Record<Energy, number>
+  cost_converter_gizmos_id: number[]
+}
 export type Action =
-  | { type: ActionType.PICK; index: number }
-  | { type: ActionType.FILE; level: GizmoLevel; index: number }
-  | { type: ActionType.FILE_FROM_RESEARCH; index: number }
-  | {
-      type: ActionType.BUILD
-      level: GizmoLevel
-      index: number
-      cost_energy_num: Record<Energy, number>
-      cost_converter_gizmos_index: number[]
-    }
-  | {
-      type: ActionType.BUILD_FROM_FILED
-      index: number
-      cost_energy_num: Record<Energy, number>
-      cost_converter_gizmos_index: number[]
-    }
-  | {
-      type: ActionType.BUILD_FROM_RESEARCH
-      index: number
-      cost_energy_num: Record<Energy, number>
-      cost_converter_gizmos_index: number[]
-    }
-  | {
-      type: ActionType.BUILD_FOR_FREE
-      level: GizmoLevel
-      index: number
-    }
-  | {
-      type: ActionType.RESEARCH
-      level: GizmoLevel
-    }
-  | {
-      type: ActionType.DROP
-      energy_num: Record<Energy, number>
-    }
-  | {
-      type: ActionType.USE_GIZMO
-      index: number
-    }
+  | { type: ActionType.PICK; energy: Energy }
+  | { type: ActionType.FILE; id: number }
+  | { type: ActionType.FILE_FROM_RESEARCH; id: number }
+  | ({ type: ActionType.BUILD } & ActionBuildSolution)
+  | ({ type: ActionType.BUILD_FROM_FILED } & ActionBuildSolution)
+  | ({ type: ActionType.BUILD_FROM_RESEARCH } & ActionBuildSolution)
+  | { type: ActionType.BUILD_FOR_FREE; id: number }
+  | { type: ActionType.RESEARCH; level: GizmoLevel }
+  | { type: ActionType.CHOOSE_TRIGGER; gizmos: number[] }
+  | { type: ActionType.USE_GIZMO; id: number }
   | { type: ActionType.GIVE_UP }
   | { type: ActionType.END }
 
@@ -105,24 +80,27 @@ export type Observation = {
   curr_stage: State['curr_stage']
   curr_player_index: State['curr_player_index']
   is_last_turn: State['is_last_turn']
+  energy_pool_num: number
   energy_board: State['energy_board']
+  gizmos_pool_num: Record<GizmoLevel, number>
   gizmos_board: Record<GizmoLevel, GizmoInfo[]>
   researching: { level: GizmoLevel; gizmos: GizmoInfo[] } | null
   players: PlayerInfo[]
-  avail_actions: ActionType[]
   free_build: State['free_build']
   free_pick_num: State['free_pick_num']
   truncated: boolean
 }
 
 export class GizmosEnv {
+  check: boolean
+
   player_num: number
   max_gizmos_num: number
   max_level3_gizmos_num: number
 
   state!: State
 
-  pick_gizmos_from_pool(level: GizmoLevel, num: number) {
+  draw_gizmos_from_pool(level: GizmoLevel, num: number) {
     const len = this.state.gizmos_pool[level].length
     return this.state.gizmos_pool[level].splice(0, Math.min(num, len))
   }
@@ -134,19 +112,19 @@ export class GizmosEnv {
     ]
   }
 
-  pick_gizmo_from_board(level: GizmoLevel, index: number) {
-    if (index >= this.state.gizmos_board[level].length) {
-      throw new Error('gizmo index out of bound')
+  pick_gizmo_from_board(id: number) {
+    const gizmo = this.all_board_gizmos.find(g => g.id === id)
+    if (!gizmo) {
+      throw new Error('[pick_gizmo_from_board] no such gizmo')
     }
-    const gizmo = this.state.gizmos_board[level].splice(index, 1)[0]
-    this.state.gizmos_board[level] = [
-      ...this.state.gizmos_board[level],
-      ...this.pick_gizmos_from_pool(level, 1),
+    this.state.gizmos_board[gizmo.level] = [
+      ...this.state.gizmos_board[gizmo.level].filter(g => g.id !== id),
+      ...this.draw_gizmos_from_pool(gizmo.level, 1),
     ]
     return gizmo
   }
 
-  pick_energy_from_pool(num: number) {
+  draw_energy_from_pool(num: number) {
     const len = this.state.energy_pool.length
     return this.state.energy_pool.splice(0, Math.min(num, len))
   }
@@ -165,24 +143,26 @@ export class GizmosEnv {
     ])
   }
 
-  pick_energy_from_board(index: number) {
-    if (index >= this.state.energy_board.length) {
-      throw new Error('energy index out of bound')
+  pick_energy_from_board(energy: Energy) {
+    const index = this.state.energy_board.indexOf(energy)
+    if (index === -1) {
+      throw new Error('[pick_energy_from_board] no such energy')
     }
-    const energy = this.state.energy_board.splice(index, 1)[0]
+    this.state.energy_board.splice(index, 1)
     this.state.energy_board = [
       ...this.state.energy_board,
-      ...this.pick_energy_from_pool(1),
+      ...this.draw_energy_from_pool(1),
     ]
     return energy
   }
 
-  pick_gizmo_from_research(index: number) {
-    if (
-      !this.state.researching ||
-      index >= this.state.researching.gizmos.length
-    ) {
-      throw new Error('research index out of bound')
+  pick_gizmo_from_research(id: number) {
+    if (!this.state.researching) {
+      throw new Error('[pick_gizmo_from_research] not researching')
+    }
+    const index = this.state.researching.gizmos.findIndex(g => g.id === id)
+    if (index === -1) {
+      throw new Error('[pick_gizmo_from_research] no such gizmo')
     }
     const gizmo = this.state.researching.gizmos.splice(index, 1)[0]
     this.drop_gizmos_to_pool(
@@ -206,214 +186,187 @@ export class GizmosEnv {
   }
 
   get avail_actions() {
-    let actions: ActionType[] = []
+    let actions: Set<ActionType> = new Set()
     switch (this.state.curr_stage) {
       case Stage.MAIN:
-        actions = [ActionType.END]
+        actions.add(ActionType.END)
         if (this.state.energy_board.length > 0) {
-          actions.push(ActionType.PICK)
+          actions.add(ActionType.PICK)
         }
         if (
           this.buildable_gizmos(this.all_board_gizmos, BuildMethod.DIRECTLY)
             .length > 0
         ) {
-          actions.push(ActionType.BUILD)
+          actions.add(ActionType.BUILD)
         }
         if (this.curr_player.research_num > 0) {
-          actions.push(ActionType.RESEARCH)
+          actions.add(ActionType.RESEARCH)
         }
-        if (this.curr_player.filed.length < this.curr_player.max_file_num) {
-          actions.push(ActionType.FILE)
+        if (this.curr_player.filed.size < this.curr_player.max_file_num) {
+          actions.add(ActionType.FILE)
         }
         if (
-          this.curr_player.filed.length > 0 &&
+          this.curr_player.filed.size > 0 &&
           this.buildable_gizmos(this.curr_player.filed, BuildMethod.FROM_FILED)
             .length > 0
         ) {
-          actions.push(ActionType.BUILD_FROM_FILED)
-        }
-        break
-      case Stage.CHOOSE_BUILD:
-        actions = [ActionType.GIVE_UP]
-        if (this.state.free_build) {
-          actions.push(ActionType.BUILD_FOR_FREE)
-        } else if (
-          this.buildable_gizmos(this.all_board_gizmos, BuildMethod.DIRECTLY)
-            .length > 0
-        ) {
-          actions.push(ActionType.BUILD)
-        }
-        break
-      case Stage.CHOOSE_FILE:
-        actions = [ActionType.GIVE_UP]
-        if (this.curr_player.filed.length < this.curr_player.max_file_num) {
-          actions.push(ActionType.FILE)
-        }
-        break
-      case Stage.CHOOSE_RESEARCH:
-        actions = [ActionType.GIVE_UP]
-        if (this.curr_player.research_num > 0) {
-          actions.push(ActionType.RESEARCH)
+          actions.add(ActionType.BUILD_FROM_FILED)
         }
         break
       case Stage.RESEARCH:
-        actions = [ActionType.GIVE_UP]
+        actions.add(ActionType.GIVE_UP)
         if (
           this.buildable_gizmos(
             this.state.researching?.gizmos ?? [],
             BuildMethod.FROM_RESEARCH
           ).length > 0
         ) {
-          actions.push(ActionType.BUILD_FROM_RESEARCH)
+          actions.add(ActionType.BUILD_FROM_RESEARCH)
         }
-        if (this.curr_player.filed.length < this.curr_player.max_file_num) {
-          actions.push(ActionType.FILE_FROM_RESEARCH)
-        }
-        break
-      case Stage.PICK:
-        actions = [ActionType.END]
-        if (this.state.energy_board.length > 0) {
-          actions.push(ActionType.PICK)
+        if (this.curr_player.filed.size < this.curr_player.max_file_num) {
+          actions.add(ActionType.FILE_FROM_RESEARCH)
         }
         break
-      case Stage.DROP:
-        actions = [ActionType.DROP]
-        break
-      case Stage.FREE:
-        actions = [ActionType.END]
+      case Stage.TRIGGER:
+        actions.add(ActionType.END)
         if (this.curr_player.avail_gizmos.length > 0) {
-          actions.push(ActionType.USE_GIZMO)
+          actions.add(ActionType.USE_GIZMO)
+        }
+        break
+      case Stage.EXTRA_PICK:
+        actions.add(ActionType.GIVE_UP)
+        if (this.state.energy_board.length > 0) {
+          actions.add(ActionType.PICK)
+        }
+        break
+      case Stage.EXTRA_BUILD:
+        actions.add(ActionType.GIVE_UP)
+        if (this.state.free_build) {
+          actions.add(ActionType.BUILD_FOR_FREE)
+        } else if (
+          this.buildable_gizmos(this.all_board_gizmos, BuildMethod.DIRECTLY)
+            .length > 0
+        ) {
+          actions.add(ActionType.BUILD)
+        }
+        break
+      case Stage.EXTRA_FILE:
+        actions.add(ActionType.GIVE_UP)
+        if (this.curr_player.filed.size < this.curr_player.max_file_num) {
+          actions.add(ActionType.FILE)
+        }
+        break
+      case Stage.EXTRA_RESEARCH:
+        actions.add(ActionType.GIVE_UP)
+        if (this.curr_player.research_num > 0) {
+          actions.add(ActionType.RESEARCH)
         }
         break
       case Stage.GAME_OVER:
         break
       default:
-        throw new Error('unexpected stage')
+        throw new Error('[avail_actions] unexpected stage')
     }
     return actions
   }
 
-  get is_energy_overflow() {
-    return this.curr_player.total_energy_num > this.curr_player.max_energy_num
+  private action_avail(action: ActionType) {
+    if (!this.check) return true
+    return this.avail_actions.has(action)
   }
 
-  pick(index: number) {
-    if (!this.avail_actions.includes(ActionType.PICK)) {
-      throw new Error('cannot pick now')
-    }
-    const energy = this.pick_energy_from_board(index)
+  pick(energy: Energy) {
+    this.pick_energy_from_board(energy)
     this.curr_player.pick(energy)
-    this.state.curr_stage = Stage.FREE
+    this.state.curr_stage = Stage.TRIGGER
   }
 
-  file(level: GizmoLevel, index: number) {
-    if (!this.avail_actions.includes(ActionType.FILE)) {
-      throw new Error('cannot file now')
-    }
-    const gizmo = this.pick_gizmo_from_board(level, index)
+  file(id: number) {
+    const gizmo = this.pick_gizmo_from_board(id)
     this.curr_player.file(gizmo)
-    this.state.curr_stage = Stage.FREE
+    this.state.curr_stage = Stage.TRIGGER
   }
 
-  file_from_research(index: number) {
-    if (!this.avail_actions.includes(ActionType.FILE_FROM_RESEARCH)) {
-      throw new Error('cannot file_from_research now')
-    }
-    const gizmo = this.pick_gizmo_from_research(index)
+  file_from_research(id: number) {
+    const gizmo = this.pick_gizmo_from_research(id)
     this.curr_player.file(gizmo)
-    this.state.curr_stage = Stage.FREE
+    this.state.curr_stage = Stage.TRIGGER
   }
 
   build(
-    level: GizmoLevel,
-    index: number,
+    id: number,
     cost_energy_num: Record<Energy, number>,
-    cost_converter_gizmos_index: number[]
+    cost_converter_gizmos_id: number[]
   ) {
-    if (!this.avail_actions.includes(ActionType.BUILD)) {
-      throw new Error('cannot build now')
-    }
-    const gizmo = this.pick_gizmo_from_board(level, index)
-    this.curr_player.build(gizmo, cost_energy_num, cost_converter_gizmos_index)
-    this.state.curr_stage = Stage.FREE
+    const gizmo = this.pick_gizmo_from_board(id)
+    this.curr_player.build(gizmo, cost_energy_num, cost_converter_gizmos_id)
+    this.state.curr_stage = Stage.TRIGGER
   }
 
   build_from_filed(
-    index: number,
+    id: number,
     cost_energy_num: Record<Energy, number>,
-    cost_converter_gizmos_index: number[]
+    cost_converter_gizmos_id: number[]
   ) {
-    if (!this.avail_actions.includes(ActionType.BUILD_FROM_FILED)) {
-      throw new Error('cannot build_from_filed now')
-    }
     this.curr_player.build_from_filed(
-      index,
+      id,
       cost_energy_num,
-      cost_converter_gizmos_index
+      cost_converter_gizmos_id
     )
-    this.state.curr_stage = Stage.FREE
+    this.state.curr_stage = Stage.TRIGGER
   }
 
   build_from_research(
-    index: number,
+    id: number,
     cost_energy_num: Record<Energy, number>,
-    cost_converter_gizmos_index: number[]
+    cost_converter_gizmos_id: number[]
   ) {
-    if (!this.avail_actions.includes(ActionType.BUILD_FROM_RESEARCH)) {
-      throw new Error('cannot build_from_research now')
-    }
-    const gizmo = this.pick_gizmo_from_research(index)
+    const gizmo = this.pick_gizmo_from_research(id)
     this.curr_player.build_from_research(
       gizmo,
       cost_energy_num,
-      cost_converter_gizmos_index
+      cost_converter_gizmos_id
     )
-    this.state.curr_stage = Stage.FREE
+    this.state.curr_stage = Stage.TRIGGER
   }
 
-  build_for_free(level: GizmoLevel, index: number) {
-    if (!this.avail_actions.includes(ActionType.BUILD_FOR_FREE)) {
-      throw new Error('cannot build_for_free now')
+  build_for_free(id: number) {
+    if (!this.state.free_build) {
+      throw new Error('[build_for_free] no free build')
     }
-    if (
-      !this.state.free_build ||
-      !this.state.free_build.level.includes(level)
-    ) {
-      throw new Error('cannot build_for_free for this gizmo')
+    const gizmo = this.pick_gizmo_from_research(id)
+    if (!this.state.free_build.level.includes(gizmo.level)) {
+      throw new Error('[build_for_free] wrong level')
     }
-    const gizmo = this.pick_gizmo_from_research(index)
     this.curr_player.build_for_free(gizmo)
     this.state.free_build = null
-    this.state.curr_stage = Stage.FREE
+    this.state.curr_stage = Stage.TRIGGER
   }
 
   research(level: GizmoLevel) {
-    if (!this.avail_actions.includes(ActionType.RESEARCH)) {
-      throw new Error('cannot research now')
-    }
     this.state.researching = {
       level,
-      gizmos: this.pick_gizmos_from_pool(level, this.curr_player.research_num),
+      gizmos: this.draw_gizmos_from_pool(level, this.curr_player.research_num),
     }
     this.state.curr_stage = Stage.RESEARCH
   }
 
   give_up() {
-    if (!this.avail_actions.includes(ActionType.GIVE_UP)) {
-      throw new Error('cannot give_up now')
-    }
     switch (this.state.curr_stage) {
-      case Stage.CHOOSE_BUILD:
+      case Stage.EXTRA_PICK:
+        this.state.free_pick_num = 0
+        break
+      case Stage.EXTRA_BUILD:
         if (this.state.free_build) {
           this.state.free_build = null
         }
         break
-      case Stage.CHOOSE_FILE:
-      case Stage.CHOOSE_RESEARCH:
+      case Stage.EXTRA_FILE:
+      case Stage.EXTRA_RESEARCH:
         break
       case Stage.RESEARCH:
         if (!this.state.researching) {
-          throw new Error('no researching')
+          throw new Error('[give_up] no researching')
         }
         this.drop_gizmos_to_pool(
           this.state.researching.level,
@@ -422,29 +375,21 @@ export class GizmosEnv {
         this.state.researching = null
         break
       default:
-        throw new Error('give_up at an unexpected stage')
+        throw new Error('[give_up] unexpected stage')
     }
-    this.state.curr_stage = Stage.FREE
+    this.state.curr_stage = Stage.TRIGGER
   }
 
-  drop(energy_num: Record<Energy, number>) {
-    if (!this.avail_actions.includes(ActionType.DROP)) {
-      throw new Error('cannot drop now')
+  use_gizmo(id: number) {
+    if (!this.action_avail(ActionType.USE_GIZMO)) {
+      throw new Error('[use_gizmo] unavailable')
     }
-    this.curr_player.drop(energy_num)
-    this.state.curr_stage = Stage.FREE
-  }
-
-  use_gizmo(index: number) {
-    if (!this.avail_actions.includes(ActionType.USE_GIZMO)) {
-      throw new Error('cannot use_gizmo now')
-    }
-    this.curr_player.use_gizmo(index)
+    this.curr_player.use_gizmo(id)
   }
 
   next_player() {
     if (
-      this.curr_player.gizmos.length >= this.max_gizmos_num ||
+      this.curr_player.gizmos.size >= this.max_gizmos_num ||
       this.curr_player.level3_gizmos.length >= this.max_level3_gizmos_num
     ) {
       this.state.is_last_turn = true
@@ -480,59 +425,56 @@ export class GizmosEnv {
   }
 
   step(playerIndex: number, action: Action) {
+    console.log('[step]', { playerIndex }, action)
     console.time('step')
     try {
       if (playerIndex !== this.state.curr_player_index) {
         console.error('[step] not your turn')
         return
       }
-      if (!this.avail_actions.includes(action.type)) {
-        console.error('[step] unexpected action type')
+      if (!this.action_avail(action.type)) {
+        console.error(`[step] action ${action.type} unavailable`)
         return
       }
       switch (action.type) {
         case ActionType.PICK:
-          this.pick(action.index)
+          this.pick(action.energy)
           break
         case ActionType.FILE:
-          this.file(action.level, action.index)
+          this.file(action.id)
           break
         case ActionType.FILE_FROM_RESEARCH:
-          this.file_from_research(action.index)
+          this.file_from_research(action.id)
           break
         case ActionType.BUILD:
           this.build(
-            action.level,
-            action.index,
+            action.id,
             action.cost_energy_num,
-            action.cost_converter_gizmos_index
+            action.cost_converter_gizmos_id
           )
           break
         case ActionType.BUILD_FROM_FILED:
           this.build_from_filed(
-            action.index,
+            action.id,
             action.cost_energy_num,
-            action.cost_converter_gizmos_index
+            action.cost_converter_gizmos_id
           )
           break
         case ActionType.BUILD_FROM_RESEARCH:
           this.build_from_research(
-            action.index,
+            action.id,
             action.cost_energy_num,
-            action.cost_converter_gizmos_index
+            action.cost_converter_gizmos_id
           )
           break
         case ActionType.BUILD_FOR_FREE:
-          this.build_for_free(action.level, action.index)
+          this.build_for_free(action.id)
           break
         case ActionType.RESEARCH:
           this.research(action.level)
           break
-        case ActionType.DROP:
-          this.drop(action.energy_num)
-          break
         case ActionType.USE_GIZMO:
-          this.use_gizmo(action.index)
+          this.use_gizmo(action.id)
           break
         case ActionType.GIVE_UP:
           this.give_up()
@@ -544,13 +486,15 @@ export class GizmosEnv {
           console.error('[step] unexpected action type')
           return
       }
-      if (this.is_energy_overflow) {
-        this.state.curr_stage = Stage.DROP
-      } else if (this.state.free_pick_num > 0) {
+      if (this.state.free_pick_num > 0) {
         this.state.free_pick_num -= 1
-        this.state.curr_stage = Stage.PICK
+        this.state.curr_stage = Stage.EXTRA_PICK
       } else {
-        if (this.avail_actions.every(action => action === ActionType.END)) {
+        if (
+          this.avail_actions.size <= 0 ||
+          (this.avail_actions.size === 1 &&
+            this.avail_actions.has(ActionType.END))
+        ) {
           this.next_player()
         }
       }
@@ -584,7 +528,13 @@ export class GizmosEnv {
       curr_stage: this.state.curr_stage,
       curr_player_index: this.state.curr_player_index,
       is_last_turn: this.state.is_last_turn,
+      energy_pool_num: this.state.energy_pool.length,
       energy_board: this.state.energy_board,
+      gizmos_pool_num: {
+        1: this.state.gizmos_pool[1].length,
+        2: this.state.gizmos_pool[2].length,
+        3: this.state.gizmos_pool[3].length,
+      },
       gizmos_board: {
         1: this.state.gizmos_board[1].map(g => g.info),
         2: this.state.gizmos_board[2].map(g => g.info),
@@ -599,7 +549,6 @@ export class GizmosEnv {
           : null
         : null,
       players: this.state.players.map(p => p.info),
-      avail_actions: this.avail_actions,
       free_build: this.state.free_build,
       free_pick_num: this.state.free_pick_num,
       truncated: this.truncated,
@@ -669,10 +618,10 @@ export class GizmosEnv {
       free_build: null,
       free_pick_num: 0,
     }
-    this.state.energy_board = this.pick_energy_from_pool(6)
-    this.state.gizmos_board[1] = this.pick_gizmos_from_pool(1, 4)
-    this.state.gizmos_board[2] = this.pick_gizmos_from_pool(2, 3)
-    this.state.gizmos_board[3] = this.pick_gizmos_from_pool(3, 2)
+    this.state.energy_board = this.draw_energy_from_pool(6)
+    this.state.gizmos_board[1] = this.draw_gizmos_from_pool(1, 4)
+    this.state.gizmos_board[2] = this.draw_gizmos_from_pool(2, 3)
+    this.state.gizmos_board[3] = this.draw_gizmos_from_pool(3, 2)
     for (let i = 0; i < this.player_num; ++i) {
       this.state.players.push(init_player(this, i))
     }
@@ -691,7 +640,7 @@ export class GizmosEnv {
       gizmo,
       method,
       player.energy_num,
-      player.converter_gizmos.filter(g => g.is_satisfied(gizmo)),
+      [...player.converter_gizmos].filter(g => g.is_satisfied(gizmo)),
       check_only
     )
   }
@@ -700,8 +649,8 @@ export class GizmosEnv {
     return this.build_solutions(gizmo, method, true).length > 0
   }
 
-  buildable_gizmos(gizmos: Gizmo[], method: BuildMethod) {
-    return gizmos.filter(g => this.can_build(g, method))
+  buildable_gizmos(gizmos: Gizmo[] | Set<Gizmo>, method: BuildMethod) {
+    return [...gizmos].filter(g => this.can_build(g, method))
   }
 
   get all_board_gizmos() {
@@ -712,209 +661,196 @@ export class GizmosEnv {
     ]
   }
 
-  sample_pick(): Action {
-    return {
+  get space_pick(): Action[] {
+    if (![Stage.MAIN, Stage.EXTRA_PICK].includes(this.state.curr_stage)) {
+      return []
+    }
+    if (!this.curr_player.can_add_energy) {
+      return []
+    }
+    return this.state.energy_board.map(energy => ({
       type: ActionType.PICK,
-      index: random_int(this.state.energy_board.length),
+      energy,
+    }))
+  }
+
+  get space_file(): Action[] {
+    if (![Stage.MAIN, Stage.EXTRA_FILE].includes(this.state.curr_stage)) {
+      return []
     }
-  }
-
-  private sample_board_gizmo(gizmos = this.all_board_gizmos) {
-    const gizmo = sample(gizmos)
-    const level = gizmo.level
-    const index = this.state.gizmos_board[level].indexOf(gizmo)
-    return { level, index }
-  }
-
-  private sample_solution(gizmo: Gizmo, method: BuildMethod) {
-    const solutions = this.build_solutions(gizmo, method)
-    return sample(solutions)
-  }
-
-  sample_file(): Action {
-    return {
+    if (!this.curr_player.can_file) {
+      return []
+    }
+    return this.all_board_gizmos.map(gizmo => ({
       type: ActionType.FILE,
-      ...this.sample_board_gizmo(),
-    }
+      id: gizmo.id,
+    }))
   }
 
-  sample_file_from_research(): Action {
+  get space_file_from_research(): Action[] {
+    if (this.state.curr_stage !== Stage.RESEARCH) {
+      return []
+    }
     const researching = this.state.researching
     if (!researching) {
-      throw new Error('sample_file_from_research failed')
+      return []
     }
-    return {
+    if (!this.curr_player.can_file) {
+      return []
+    }
+    return researching.gizmos.map(gizmo => ({
       type: ActionType.FILE_FROM_RESEARCH,
-      index: random_int(researching.gizmos.length),
-    }
+      id: gizmo.id,
+    }))
   }
 
-  sample_build(): Action {
-    const avail_gizmos = this.all_board_gizmos.filter(g =>
-      this.can_build(g, BuildMethod.DIRECTLY)
-    )
-    if (avail_gizmos.length <= 0) {
-      throw new Error('sample_build failed')
-    }
-    const { level, index } = this.sample_board_gizmo(avail_gizmos)
-    const gizmo = this.state.gizmos_board[level][index]
-    const { energy_num: cost_energy_num, gizmos: cost_converter_gizmos } =
-      this.sample_solution(gizmo, BuildMethod.DIRECTLY)
-    const cost_converter_gizmos_index = cost_converter_gizmos.map(g =>
-      this.curr_player.gizmos.indexOf(g)
-    )
-    return {
-      type: ActionType.BUILD,
-      level,
-      index,
-      cost_energy_num,
-      cost_converter_gizmos_index,
-    }
+  private space_build(
+    gizmos: Gizmo[] | Set<Gizmo>,
+    method: BuildMethod,
+    action_type:
+      | ActionType.BUILD
+      | ActionType.BUILD_FROM_FILED
+      | ActionType.BUILD_FROM_RESEARCH
+  ): Action[] {
+    let actions: Action[] = []
+    ;[...gizmos].forEach(gizmo => {
+      this.build_solutions(gizmo, method).forEach(solution => {
+        actions.push({
+          type: action_type,
+          id: gizmo.id,
+          cost_energy_num: solution.energy_num,
+          cost_converter_gizmos_id: solution.gizmos.map(g => g.id),
+        })
+      })
+    })
+    return actions
   }
 
-  sample_build_from_research(): Action {
+  get space_build_directly(): Action[] {
+    if (![Stage.MAIN, Stage.EXTRA_BUILD].includes(this.state.curr_stage)) {
+      return []
+    }
+    return this.space_build(
+      this.all_board_gizmos,
+      BuildMethod.DIRECTLY,
+      ActionType.BUILD
+    )
+  }
+
+  get space_build_from_file(): Action[] {
+    if (this.state.curr_stage !== Stage.MAIN) {
+      return []
+    }
+    return this.space_build(
+      this.curr_player.filed,
+      BuildMethod.FROM_FILED,
+      ActionType.BUILD_FROM_FILED
+    )
+  }
+
+  get space_build_from_research(): Action[] {
+    if (this.state.curr_stage !== Stage.RESEARCH) {
+      return []
+    }
     const researching_gizmos = this.state.researching?.gizmos ?? []
-    const avail_gizmos = researching_gizmos.filter(g =>
-      this.can_build(g, BuildMethod.FROM_RESEARCH)
+    return this.space_build(
+      researching_gizmos,
+      BuildMethod.FROM_RESEARCH,
+      ActionType.BUILD_FROM_RESEARCH
     )
-    if (avail_gizmos.length <= 0) {
-      throw new Error('sample_build_from_research failed')
-    }
-    const gizmo = sample(avail_gizmos)
-    const index = researching_gizmos.indexOf(gizmo)
-    const { energy_num: cost_energy_num, gizmos: cost_converter_gizmos } =
-      this.sample_solution(gizmo, BuildMethod.FROM_RESEARCH)
-    const cost_converter_gizmos_index = cost_converter_gizmos.map(g =>
-      this.curr_player.gizmos.indexOf(g)
-    )
-    return {
-      type: ActionType.BUILD_FROM_RESEARCH,
-      index,
-      cost_energy_num,
-      cost_converter_gizmos_index,
-    }
   }
 
-  sample_build_from_file(): Action {
-    const avail_gizmos = this.curr_player.filed.filter(g =>
-      this.can_build(g, BuildMethod.FROM_FILED)
-    )
-    if (avail_gizmos.length <= 0) {
-      throw new Error('sample_build_from_research failed')
+  get space_build_for_free(): Action[] {
+    if (this.state.curr_stage !== Stage.EXTRA_BUILD) {
+      return []
     }
-    const gizmo = sample(avail_gizmos)
-    const index = this.curr_player.filed.indexOf(gizmo)
-    const { energy_num: cost_energy_num, gizmos: cost_converter_gizmos } =
-      this.sample_solution(gizmo, BuildMethod.FROM_FILED)
-    const cost_converter_gizmos_index = cost_converter_gizmos.map(g =>
-      this.curr_player.gizmos.indexOf(g)
-    )
-    return {
-      type: ActionType.BUILD_FROM_FILED,
-      index,
-      cost_energy_num,
-      cost_converter_gizmos_index,
-    }
-  }
-
-  sample_build_for_free(): Action {
     const levels = this.state.free_build?.level ?? []
     const avail_gizmos = levels.reduce(
       (acc, curr) => [...acc, ...this.state.gizmos_board[curr]],
       [] as Gizmo[]
     )
-    if (avail_gizmos.length <= 0) {
-      throw new Error('sample_build_for_free failed')
-    }
-    const { level, index } = this.sample_board_gizmo(avail_gizmos)
-    return {
+    return avail_gizmos.map(gizmo => ({
       type: ActionType.BUILD_FOR_FREE,
-      level,
-      index,
-    }
+      id: gizmo.id,
+    }))
   }
 
-  sample_research(): Action {
+  get space_research(): Action[] {
+    if (![Stage.MAIN, Stage.EXTRA_RESEARCH].includes(this.state.curr_stage)) {
+      return []
+    }
     const levels: GizmoLevel[] = [1, 2, 3]
     const avail_levels = levels.filter(
       level => this.state.gizmos_pool[level].length > 0
     )
-    const level = sample(avail_levels)
-    return {
+    return avail_levels.map(level => ({
       type: ActionType.RESEARCH,
       level,
-    }
+    }))
   }
 
-  sample_drop(): Action {
-    const should_drop_num =
-      this.curr_player.total_energy_num - this.curr_player.max_energy_num
-    const energy = shuffle(
-      ALL_ENERGY_TYPES.reduce(
-        (acc, curr) => [
-          ...acc,
-          ...new Array(this.curr_player.info.energy_num[curr]).fill(curr),
-        ],
-        [] as Energy[]
-      )
-    )
-    const drop_energy = energy.splice(0, should_drop_num)
-    const drop_energy_num = drop_energy.reduce(
-      (acc, curr) => ({
-        ...acc,
-        [curr]: acc[curr] + 1,
-      }),
-      init_energy_num()
-    )
-    return {
-      type: ActionType.DROP,
-      energy_num: drop_energy_num,
+  get space_use_gizmo(): Action[] {
+    if (this.state.curr_stage !== Stage.TRIGGER) {
+      return []
     }
-  }
-
-  sample_use_gizmo(): Action {
-    const gizmo = sample(this.curr_player.avail_gizmos)
-    const index = this.curr_player.gizmos.indexOf(gizmo)
-    return {
+    return this.curr_player.avail_gizmos.map(gizmo => ({
       type: ActionType.USE_GIZMO,
-      index,
+      id: gizmo.id,
+    }))
+  }
+
+  get space_give_up(): Action[] {
+    if (
+      ![
+        Stage.EXTRA_PICK,
+        Stage.EXTRA_BUILD,
+        Stage.EXTRA_FILE,
+        Stage.EXTRA_RESEARCH,
+        Stage.RESEARCH,
+      ].includes(this.state.curr_stage)
+    ) {
+      return []
     }
+    return [{ type: ActionType.GIVE_UP }]
+  }
+
+  get space_end(): Action[] {
+    if (![Stage.MAIN, Stage.TRIGGER].includes(this.state.curr_stage)) {
+      return []
+    }
+    return [{ type: ActionType.END }]
+  }
+
+  get action_space(): Action[] {
+    return [
+      ...this.space_pick,
+      ...this.space_file,
+      ...this.space_file_from_research,
+      ...this.space_build_directly,
+      ...this.space_build_from_file,
+      ...this.space_build_from_research,
+      ...this.space_build_for_free,
+      ...this.space_research,
+      ...this.space_use_gizmo,
+      ...this.space_give_up,
+      ...this.space_end,
+    ]
   }
 
   sample(): Action {
-    const action_type = sample(this.avail_actions)
-    switch (action_type) {
-      case ActionType.PICK:
-        return this.sample_pick()
-      case ActionType.FILE:
-        return this.sample_file()
-      case ActionType.FILE_FROM_RESEARCH:
-        return this.sample_file_from_research()
-      case ActionType.BUILD:
-        return this.sample_build()
-      case ActionType.BUILD_FROM_RESEARCH:
-        return this.sample_build_from_research()
-      case ActionType.BUILD_FROM_FILED:
-        return this.sample_build_from_file()
-      case ActionType.BUILD_FOR_FREE:
-        return this.sample_build_for_free()
-      case ActionType.RESEARCH:
-        return this.sample_research()
-      case ActionType.DROP:
-        return this.sample_drop()
-      case ActionType.USE_GIZMO:
-        return this.sample_use_gizmo()
-      case ActionType.GIVE_UP:
-        return { type: ActionType.GIVE_UP }
-      case ActionType.END:
-        return { type: ActionType.END }
-    }
+    return sample(this.action_space)
   }
 
-  constructor(player_num = 2, max_gizmos_num = 16, max_level3_gizmos_num = 4) {
-    if (player_num < 2 || max_gizmos_num < 2 || max_level3_gizmos_num < 1) {
+  constructor({
+    player_num = 2,
+    max_gizmos_num = 16,
+    max_level3_gizmos_num = 4,
+    check = true,
+  }) {
+    if (player_num < 1 || max_gizmos_num < 2 || max_level3_gizmos_num < 1) {
       throw new Error('unsupported configuration')
     }
+    this.check = check
     this.player_num = player_num
     this.max_gizmos_num = max_gizmos_num
     this.max_level3_gizmos_num = max_level3_gizmos_num

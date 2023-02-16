@@ -17,7 +17,7 @@ export enum GizmoType {
 }
 export type Effect =
   | { type: 'na' }
-  | { type: 'draw_from_pool'; num: number }
+  | { type: 'free_draw'; num: number }
   | { type: 'free_pick'; num: number }
   | { type: 'add_point_token'; num: number }
   | { type: 'extra_file' }
@@ -68,8 +68,8 @@ export abstract class Gizmo<Level = GizmoLevel> {
   used_by(player: Player) {
     this.assert_available()
     switch (this.effect.type) {
-      case 'draw_from_pool':
-        this.draw_from_pool(player, this.effect.num)
+      case 'free_draw':
+        this.free_draw(player, this.effect.num)
         break
       case 'free_pick':
         this.free_pick(player, this.effect.num)
@@ -92,11 +92,15 @@ export abstract class Gizmo<Level = GizmoLevel> {
     this.used = true
   }
 
-  draw_from_pool(player: Player, num: number) {
+  free_draw(player: Player, num: number) {
     if (player.env.energy_pool_len() <= 0) {
       return
     }
-    player.env.pick_energy_from_pool(num).forEach(player.add_energy)
+    const draw_num = Math.min(
+      num,
+      player.max_energy_num - player.total_energy_num
+    )
+    player.env.draw_energy_from_pool(draw_num).forEach(player.add_energy)
   }
 
   free_pick(player: Player, num: number) {
@@ -111,16 +115,16 @@ export abstract class Gizmo<Level = GizmoLevel> {
   }
 
   extra_file(player: Player) {
-    player.env.state.curr_stage === Stage.CHOOSE_FILE
+    player.env.state.curr_stage === Stage.EXTRA_FILE
   }
 
   extra_research(player: Player) {
-    player.env.state.curr_stage = Stage.CHOOSE_RESEARCH
+    player.env.state.curr_stage = Stage.EXTRA_RESEARCH
   }
 
   extra_build(player: Player, level: GizmoLevel[]) {
     player.env.state.free_build = { level }
-    player.env.state.curr_stage = Stage.CHOOSE_BUILD
+    player.env.state.curr_stage = Stage.EXTRA_BUILD
   }
 
   reset() {
@@ -312,13 +316,13 @@ export class UpgradeGizmo extends Gizmo {
   }
 }
 
-export type ConverterFormula<E = EnergyWithAny> = {
+export type ConverterFormula<EF = EnergyWithAny, ET = EnergyWithAny> = {
   from: {
-    energy: E
+    energy: EF
     num: number
   }
   to: {
-    energy: E
+    energy: ET
     num: number
   }
 }

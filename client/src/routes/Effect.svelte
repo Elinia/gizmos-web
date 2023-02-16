@@ -9,7 +9,7 @@
   {#if effect.type === 'add_point_token'}
     {new Array(effect.num).fill('⭐').join('')}
   {/if}
-  {#if effect.type === 'draw_from_pool'}
+  {#if effect.type === 'free_draw'}
     {new Array(effect.num).fill('🙈').join('')}
   {/if}
   {#if effect.type === 'energy_as_point'}
