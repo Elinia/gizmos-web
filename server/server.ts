@@ -100,9 +100,13 @@ io.of('/player').on('connection', socket => {
 
   socket.on('disconnect', reason => {
     console.log(`[disconnect] ${socket.id}`)
-    playersInfo.delete(socket.id)
+    if (playersInfo.has(socket.id)) {
+      playersInfo.delete(socket.id)
+    }
     // reconnect mechanism?
-    endGame()
+    if (globalEnv) {
+      endGame()
+    }
   })
 
   socket.on('ready', () => {
