@@ -8,7 +8,7 @@ type TmpBuildSolution = {
   energy_cost: number
   avail_energy: Record<Energy, number>
   avail_gizmos: ConverterGizmo[]
-  extra_energy: Record<Energy, number>
+  extra_energy: Record<EnergyWithAny, number>
   gizmos: ConverterGizmo[]
   energy_num: Record<Energy, number>
 }
@@ -28,25 +28,37 @@ function has_better_solution(
   })
 }
 
-function detailed_energy(energy: EnergyWithAny) {
-  return energy === 'any' ? [...ALL_ENERGY_TYPES] : [energy]
-}
-
-function clone_solution(solution: BuildSolution) {
+function clone_solution(solution: BuildSolution | TmpBuildSolution) {
   return {
     energy_num: { ...solution.energy_num },
     gizmos: [...solution.gizmos],
   }
 }
 
-function clone_ts(ts: TmpBuildSolution) {
+function clone_ts(ts: TmpBuildSolution): TmpBuildSolution {
   return {
     energy_cost: ts.energy_cost,
-    avail_energy: { ...ts.avail_energy },
+    avail_energy: {
+      red: ts.avail_energy.red,
+      yellow: ts.avail_energy.yellow,
+      blue: ts.avail_energy.blue,
+      black: ts.avail_energy.black,
+    },
     avail_gizmos: [...ts.avail_gizmos],
-    extra_energy: { ...ts.extra_energy },
-    gizmos: ts.gizmos.concat(),
-    energy_num: { ...ts.energy_num },
+    extra_energy: {
+      red: ts.extra_energy.red,
+      yellow: ts.extra_energy.yellow,
+      blue: ts.extra_energy.blue,
+      black: ts.extra_energy.black,
+      any: ts.extra_energy.any,
+    },
+    gizmos: [...ts.gizmos],
+    energy_num: {
+      red: ts.energy_num.red,
+      yellow: ts.energy_num.yellow,
+      blue: ts.energy_num.blue,
+      black: ts.energy_num.black,
+    },
   }
 }
 
@@ -54,24 +66,56 @@ function apply_formula(
   ts: TmpBuildSolution,
   formula: ConverterFormula<Energy>
 ) {
+  // assume `formula.from.num` always be 1
+  if (formula.from.num !== 1) {
+    throw new Error('formula.from.num not 1')
+  }
+
   const from_e = formula.from.energy
-  const from_n = formula.from.num
-  if (ts.extra_energy[from_e] >= from_n) {
-    ts.extra_energy[from_e] -= from_n
-  } else if (ts.extra_energy[from_e] + ts.avail_energy[from_e] >= from_n) {
-    const avail_energy_cost = from_n - ts.extra_energy[from_e]
-    ts.extra_energy[from_e] = 0
-    ts.avail_energy[from_e] -= avail_energy_cost
-    ts.energy_num[from_e] += avail_energy_cost
+  if (ts.extra_energy[from_e] > 0) {
+    ts.extra_energy[from_e] -= 1
+  } else if (ts.avail_energy[from_e] > 0) {
+    ts.avail_energy[from_e] -= 1
+    ts.energy_num[from_e] += 1
   } else {
-    return
+    return false
   }
   ts.extra_energy[formula.to.energy] += formula.to.num
+  return true
 }
+
+function apply_formula_any(
+  ts: TmpBuildSolution,
+  formula: ConverterFormula<Energy>
+) {
+  // assume `formula.from.num` always be 1
+  if (formula.from.num !== 1) {
+    throw new Error('formula.from.num not 1')
+  }
+
+  if (ts.extra_energy.any > 0) {
+    ts.extra_energy.any -= 1
+  } else {
+    return false
+  }
+  ts.extra_energy[formula.to.energy] += formula.to.num
+  return true
+}
+
+type ApplyFormulaOption = [
+  ConverterFormula<Energy>,
+  typeof apply_formula | typeof apply_formula_any
+]
 
 function apply_gizmo(ts: TmpBuildSolution, gizmo: ConverterGizmo) {
   ts.gizmos.push(gizmo)
   ts.avail_gizmos = ts.avail_gizmos.filter(g => g != gizmo)
+}
+
+function not_from_any_formula(
+  formula: ConverterFormula
+): formula is ConverterFormula<Energy> {
+  return formula.from.energy !== 'any'
 }
 
 class Q<T> {
@@ -112,15 +156,20 @@ export function find_build_solutions(
       energy_cost,
       avail_energy: { ...avail_energy },
       avail_gizmos: [...avail_gizmos],
-      extra_energy: init_energy_num(),
+      extra_energy: { red: 0, yellow: 0, blue: 0, black: 0, any: 0 },
       gizmos: [],
       energy_num: init_energy_num(),
     },
   ])
   let solutions: BuildSolution[] = []
-
-  const ENERGY_TYPES =
-    energy_type === 'any' ? [...ALL_ENERGY_TYPES] : [energy_type]
+  function apply_solution(solution: BuildSolution) {
+    if (has_better_solution(solution, solutions)) {
+      return false
+    }
+    solutions = solutions.filter(s => !has_better_solution(s, [solution]))
+    solutions.push(solution)
+    return true
+  }
 
   while (tmp_solutions.length > 0) {
     if (check_only && solutions.length > 0) {
@@ -130,34 +179,70 @@ export function find_build_solutions(
     if (!ts) {
       throw new Error('no ts')
     }
-    if (has_better_solution(ts, solutions)) {
-      continue
-    }
 
-    // solved
-    if (ts.energy_cost <= 0) {
-      const solution = clone_solution(ts)
-      Object.entries(solution.energy_num).forEach(([energy, num]) => {
-        if (num < 0) solution.energy_num[energy as Energy] = 0
-      })
-      solutions = solutions.filter(s => !has_better_solution(s, [solution]))
-      solutions.push(solution)
-      continue
-    }
+    // collect solutions if possible
+    if (energy_type === 'any') {
+      const avail = ts.avail_energy
+      const total_avail = avail.red + avail.yellow + avail.blue + avail.black
+      const total_extra_energy =
+        ts.extra_energy.red +
+        ts.extra_energy.yellow +
+        ts.extra_energy.blue +
+        ts.extra_energy.black +
+        ts.extra_energy.any
+      const raw_cost = energy_cost - total_extra_energy
 
-    // try to use an energy
-    ENERGY_TYPES.forEach(energy => {
-      const new_ts = clone_ts(ts)
-      new_ts.energy_cost -= 1
-      if (ts.extra_energy[energy] > 0) {
-        new_ts.extra_energy[energy] -= 1
-        tmp_solutions.push(new_ts)
-      } else if (ts.avail_energy[energy] > 0) {
-        new_ts.avail_energy[energy] -= 1
-        new_ts.energy_num[energy] += 1
-        tmp_solutions.push(new_ts)
+      if (total_avail >= raw_cost) {
+        if (raw_cost <= 0) {
+          apply_solution(clone_solution(ts))
+          continue
+        }
+
+        const max_red = Math.min(avail.red, raw_cost)
+        const min_red = Math.max(
+          0,
+          raw_cost - avail.yellow - avail.blue - avail.black
+        )
+        for (let red = min_red; red <= max_red; red++) {
+          const raw_cost1 = raw_cost - red
+          if (raw_cost1 < 0) break
+          const max_yellow = Math.min(avail.yellow, raw_cost1 - red)
+          const min_yellow = Math.max(
+            0,
+            raw_cost1 - red - avail.blue - avail.black
+          )
+          for (let yellow = min_yellow; yellow <= max_yellow; yellow++) {
+            const raw_cost2 = raw_cost1 - yellow
+            if (raw_cost2 < 0) break
+            const max_blue = Math.min(avail.blue, raw_cost2)
+            const min_blue = Math.max(0, raw_cost2 - avail.black)
+            for (let blue = min_blue; blue <= max_blue; blue++) {
+              const raw_cost3 = raw_cost2 - blue
+              if (raw_cost3 < 0) break
+              const black = raw_cost3
+              const solution = clone_solution(ts)
+              solution.energy_num.red += red
+              solution.energy_num.yellow += yellow
+              solution.energy_num.blue += blue
+              solution.energy_num.black += black
+              apply_solution(solution)
+            }
+          }
+        }
       }
-    })
+    } else {
+      const raw_cost =
+        energy_cost - ts.extra_energy[energy_type] - ts.extra_energy.any
+      if (ts.avail_energy[energy_type] >= raw_cost) {
+        const solution = clone_solution(ts)
+        if (raw_cost > 0) {
+          solution.energy_num[energy_type] += raw_cost
+        }
+        if (!apply_solution(solution)) {
+          continue
+        }
+      }
+    }
 
     // try to use a gizmo
     ts.avail_gizmos.forEach(gizmo => {
@@ -166,36 +251,35 @@ export function find_build_solutions(
 
       // try all possible formula combinations of the gizmo
       proper_subsets(gizmo.formulae).forEach(formulae => {
-        const formulae_list: ConverterFormula<Energy>[][] = []
+        const opt_groups: ApplyFormulaOption[][] = []
         formulae.forEach(formula => {
-          // consider 'any' case
-          const energy_from_list = detailed_energy(formula.from.energy)
-          const energy_to_list = detailed_energy(formula.to.energy)
-
-          const detailed_formula_group: ConverterFormula<Energy>[] = []
-          energy_from_list.forEach(energy_from => {
-            energy_to_list.forEach(energy_to => {
-              detailed_formula_group.push({
+          const options: ApplyFormulaOption[] = []
+          if (not_from_any_formula(formula)) {
+            options.push([formula, apply_formula])
+            if (formula.to.num > 1) {
+              options.push([formula, apply_formula_any])
+            }
+          } else {
+            ALL_ENERGY_TYPES.forEach(energy => {
+              const detailed_formula = {
                 from: {
-                  energy: energy_from,
+                  energy,
                   num: formula.from.num,
                 },
-                to: {
-                  energy: energy_to,
-                  num: formula.to.num,
-                },
-              })
+                to: formula.to,
+              }
+              options.push([detailed_formula, apply_formula])
             })
-          })
-          formulae_list.push(detailed_formula_group)
+          }
+          opt_groups.push(options)
         })
-        const formula_groups = list_compose(formulae_list)
-        formula_groups.forEach(formula_group => {
+        list_compose(opt_groups).forEach(strategy => {
           const new_ts = clone_ts(base_new_ts)
-          formula_group.forEach(formula => {
-            apply_formula(new_ts, formula)
-          })
-          tmp_solutions.push(new_ts)
+          if (
+            strategy.map(([formula, fn]) => fn(new_ts, formula)).some(v => v)
+          ) {
+            tmp_solutions.push(new_ts)
+          }
         })
       })
     })
