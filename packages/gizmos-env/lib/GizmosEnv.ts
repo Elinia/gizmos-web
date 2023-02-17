@@ -528,12 +528,12 @@ export class GizmosEnv {
       curr_stage: this.state.curr_stage,
       curr_player_index: this.state.curr_player_index,
       is_last_turn: this.state.is_last_turn,
-      energy_pool_num: this.state.energy_pool.length,
+      energy_pool_num: this.energy_pool_len(),
       energy_board: this.state.energy_board,
       gizmos_pool_num: {
-        1: this.state.gizmos_pool[1].length,
-        2: this.state.gizmos_pool[2].length,
-        3: this.state.gizmos_pool[3].length,
+        1: this.gizmos_pool_len(1),
+        2: this.gizmos_pool_len(2),
+        3: this.gizmos_pool_len(3),
       },
       gizmos_board: {
         1: this.state.gizmos_board[1].map(g => g.info),
