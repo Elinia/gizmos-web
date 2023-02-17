@@ -486,10 +486,11 @@ export class GizmosEnv {
           console.error('[step] unexpected action type')
           return
       }
-      if (this.state.free_pick_num > 0) {
+      if (this.state.free_pick_num > 0 && this.curr_player.can_add_energy) {
         this.state.free_pick_num -= 1
         this.state.curr_stage = Stage.EXTRA_PICK
       } else {
+        this.state.free_pick_num = 0
         if (
           this.avail_actions.size <= 0 ||
           (this.avail_actions.size === 1 &&
