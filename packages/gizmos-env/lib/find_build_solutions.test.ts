@@ -78,8 +78,10 @@ describe('find_build_solutions', () => {
       [g1, g2],
       false
     )
-    expect(solutions.length).toBe(1)
-    const { energy_num, gizmos } = solutions[0]
+    expect(solutions.length).toBe(2)
+    const { energy_num, gizmos } = solutions.find(
+      s => s.energy_num.yellow === 1
+    )!
     expect(energy_num).toEqual(init_energy_num({ red: 1, yellow: 1, blue: 1 }))
     expect(new Set(gizmos)).toEqual(new Set([g1, g2]))
   })
@@ -117,5 +119,16 @@ describe('find_build_solutions', () => {
       false
     )
     expect(solutions3.length).toBe(0)
+  })
+
+  test('build any', () => {
+    const solutions = find_build_solutions(
+      'any',
+      7,
+      init_energy_num({ red: 5, blue: 1, black: 1 }),
+      [],
+      false
+    )
+    expect(solutions.length).toBe(1)
   })
 })

@@ -206,11 +206,8 @@ export function find_build_solutions(
         for (let red = min_red; red <= max_red; red++) {
           const raw_cost1 = raw_cost - red
           if (raw_cost1 < 0) break
-          const max_yellow = Math.min(avail.yellow, raw_cost1 - red)
-          const min_yellow = Math.max(
-            0,
-            raw_cost1 - red - avail.blue - avail.black
-          )
+          const max_yellow = Math.min(avail.yellow, raw_cost1)
+          const min_yellow = Math.max(0, raw_cost1 - avail.blue - avail.black)
           for (let yellow = min_yellow; yellow <= max_yellow; yellow++) {
             const raw_cost2 = raw_cost1 - yellow
             if (raw_cost2 < 0) break
