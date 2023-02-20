@@ -481,7 +481,6 @@ export class GizmosEnv {
           break
         case ActionType.END:
           this.next_player()
-          return
         default:
           console.error('[step] unexpected action type')
           return
