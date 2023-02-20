@@ -119,28 +119,28 @@ function not_from_any_formula(
 }
 
 class Q<T> {
-  #stack1: T[] = []
-  #stack2: T[] = []
+  stack1: T[] = []
+  stack2: T[] = []
 
   push(item: T) {
-    this.#stack1.push(item)
+    this.stack1.push(item)
   }
 
   shift() {
-    if (this.#stack2.length === 0) {
-      const tmp = this.#stack2
-      this.#stack2 = this.#stack1.reverse()
-      this.#stack1 = tmp
+    if (this.stack2.length === 0) {
+      const tmp = this.stack2
+      this.stack2 = this.stack1.reverse()
+      this.stack1 = tmp
     }
-    return this.#stack2.pop()
+    return this.stack2.pop()
   }
 
   get length() {
-    return this.#stack1.length + this.#stack2.length
+    return this.stack1.length + this.stack2.length
   }
 
   constructor(arr?: T[]) {
-    if (arr) this.#stack1 = arr.concat()
+    if (arr) this.stack1 = arr.concat()
   }
 }
 
