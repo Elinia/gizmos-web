@@ -66,6 +66,9 @@ def clone_ts(ts: TmpBuildSolution) -> TmpBuildSolution:
 
 
 def apply_formula(ts: TmpBuildSolution, formula: ConverterFormula) -> bool:
+    if formula['from']['num'] == 0:
+        ts['extra_energy'][formula['to']['energy']] += formula['to']['num']
+        return True
     # assume `formula['from']['num']` always be 1
     if formula['from']['num'] != 1:
         raise Exception('formula.from.num not 1')

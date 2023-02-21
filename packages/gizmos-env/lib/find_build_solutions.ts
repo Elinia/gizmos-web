@@ -66,6 +66,10 @@ function apply_formula(
   ts: TmpBuildSolution,
   formula: ConverterFormula<Energy>
 ) {
+  if (formula.from.num === 0) {
+    ts.extra_energy[formula.to.energy] += formula.to.num
+    return true
+  }
   // assume `formula.from.num` always be 1
   if (formula.from.num !== 1) {
     throw new Error('formula.from.num not 1')
