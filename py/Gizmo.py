@@ -1,6 +1,6 @@
 from __future__ import annotations
 from enum import Enum, auto
-from typing import List, Dict, Any, Optional, Union, TypedDict, TYPE_CHECKING
+from typing import Dict, List, Literal, Optional, Union, TypedDict, TYPE_CHECKING
 
 from common import GizmoLevel, EnergyWithAny, Energy, AllGizmoLevel, BuildMethod, Stage
 
@@ -16,16 +16,62 @@ class GizmoType(Enum):
     FILE = auto()
 
 
+class NaEffect(TypedDict):
+    type: Literal['na']
+
+
+class FreeDrawEffect(TypedDict):
+    type: Literal['free_draw']
+    num: int
+
+
+class FreePickEffect(TypedDict):
+    type: Literal['free_pick']
+    num: int
+
+
+class AddPointTokenEffect(TypedDict):
+    type: Literal['add_point_token']
+    num: int
+
+
+class ExtraFileEffect(TypedDict):
+    type: Literal['extra_file']
+
+
+class ExtraResearchEffect(TypedDict):
+    type: Literal['extra_research']
+
+
+class ExtraBuildEffect(TypedDict):
+    type: Literal['extra_build']
+    level: List[GizmoLevel]
+
+
+class EnergyAsPointEffect(TypedDict):
+    type: Literal['energy_as_point']
+
+
+class TokenAsPointEffect(TypedDict):
+    type: Literal['token_as_point']
+
+
 Effect = Union[
-    Dict[str, str],
-    Dict[str, int],
-    Dict[str, List[GizmoLevel]],
+    NaEffect,
+    FreeDrawEffect,
+    FreePickEffect,
+    AddPointTokenEffect,
+    ExtraFileEffect,
+    ExtraResearchEffect,
+    ExtraBuildEffect,
+    EnergyAsPointEffect,
+    TokenAsPointEffect,
 ]
 
 
 class GizmoBasic(TypedDict):
     id: int
-    level: GizmoLevel
+    level: AllGizmoLevel
     energy_type: EnergyWithAny
     energy_cost: int
     value: int
@@ -35,7 +81,7 @@ class GizmoBasic(TypedDict):
 class GizmoInfo(TypedDict):
     type: GizmoType
     id: int
-    level: GizmoLevel
+    level: AllGizmoLevel
     energy_type: EnergyWithAny
     energy_cost: int
     value: int
@@ -47,7 +93,7 @@ class GizmoInfo(TypedDict):
 class Gizmo:
     type: GizmoType
     id: int
-    level: GizmoLevel
+    level: AllGizmoLevel
     energy_type: EnergyWithAny
     energy_cost: int
     value: int
@@ -141,9 +187,8 @@ class Gizmo:
         self.used = False
 
 
-GizmoPick = {
-    'when_pick': List[Energy]
-}
+class GizmoPick(TypedDict):
+    when_pick: List[Energy]
 
 
 class PickGizmo(Gizmo):
@@ -171,20 +216,19 @@ class PickGizmo(Gizmo):
         self.when_pick = when_pick
 
 
-WhenBuild = {
-    'energy': Union[List[Energy], 'any'],
-    'level': Union[List[AllGizmoLevel], 'any'],
-    'method': Union[List[BuildMethod], 'any']
-}
+class WhenBuild(TypedDict):
+    energy: Union[List[Energy], Literal['any']]
+    level: Union[List[AllGizmoLevel], Literal['any']]
+    method: Union[List[BuildMethod], Literal['any']]
 
-GizmoBuild = {
-    'when_build': WhenBuild
-}
+
+class GizmoBuild(TypedDict):
+    when_build: WhenBuild
 
 
 class BuildGizmo(Gizmo):
     type = GizmoType.BUILD
-    when_build: Dict[str, Any]
+    when_build: WhenBuild
 
     def is_satisfied(self, player: Player, level: GizmoLevel, energy: EnergyWithAny, method: BuildMethod) -> bool:
         return (
@@ -213,7 +257,12 @@ class BuildGizmo(Gizmo):
         self.when_build = when_build
 
 
-GizmoUpgrade = Dict[str, Optional[int]]
+class GizmoUpgrade(TypedDict):
+    max_energy_num: Optional[int]
+    max_file_num: Optional[int]
+    research_num: Optional[int]
+    build_from_filed_cost_reduction: Optional[int]
+    build_from_research_cost_reduction: Optional[int]
 
 
 class UpgradeGizmo(Gizmo):
@@ -246,13 +295,26 @@ class UpgradeGizmo(Gizmo):
             'build_from_research_cost_reduction', 0)
 
 
-ConverterFormula = Dict[str, Any]
-GizmoConverter = Dict[str, Any]
+class FormulaSide(TypedDict):
+    energy: EnergyWithAny
+    num: int
+
+
+ConverterFormula = Dict[Literal['from', 'to'], FormulaSide]
+
+
+class Prerequisite(TypedDict):
+    level: List[AllGizmoLevel]
+
+
+class GizmoConverter(TypedDict):
+    prerequisite: Optional[Prerequisite]
+    formulae: List[ConverterFormula]
 
 
 class ConverterGizmo(Gizmo):
     type = GizmoType.CONVERTER
-    prerequisite: Optional[Dict[str, List[AllGizmoLevel]]]
+    prerequisite: Optional[Prerequisite]
     formulae: List[ConverterFormula]
 
     def is_satisfied(self, gizmo: Gizmo) -> bool:

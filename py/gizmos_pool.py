@@ -1,5 +1,5 @@
 from random import shuffle
-from typing import Dict, List, TypedDict
+from typing import Dict, List, Literal, TypedDict, Union
 
 from common import BuildMethod, Energy, GizmoLevel
 from Gizmo import Gizmo, BuildGizmo, ConverterGizmo, FileGizmo, PickGizmo, UpgradeGizmo
@@ -295,7 +295,7 @@ def build_point_level2(energy_type: Energy, build_energy: Energy):
     )
 
 
-def build_point_level2(energy_type, build_energy):
+def build_point_level2(energy_type: Energy, build_energy: Energy):
     global id
     id += 1
     return BuildGizmo(
@@ -313,7 +313,7 @@ def build_point_level2(energy_type, build_energy):
     )
 
 
-def build_from_file_pick_level2(energy_type):
+def build_from_file_pick_level2(energy_type: Energy):
     global id
     id += 1
     return BuildGizmo(
@@ -332,7 +332,7 @@ def build_from_file_pick_level2(energy_type):
     )
 
 
-def pick_draw_level2(energy_type, pick_energy):
+def pick_draw_level2(energy_type: Energy, pick_energy: List[Energy]):
     global id
     id += 1
     return PickGizmo(
@@ -347,7 +347,7 @@ def pick_draw_level2(energy_type, pick_energy):
     )
 
 
-def upgrade_level2(energy_type):
+def upgrade_level2(energy_type: Energy):
     global id
     id += 1
     return UpgradeGizmo(
@@ -401,7 +401,7 @@ def init_level2() -> List[Gizmo]:
     ]
 
 
-def level3_common(cost):
+def level3_common(cost: int):
     return dict(
         level=3,
         energy_cost=cost,
@@ -409,7 +409,7 @@ def level3_common(cost):
     )
 
 
-def upgrade_e_level3(energy_type):
+def upgrade_e_level3(energy_type: Energy):
     global id
     id += 1
     return UpgradeGizmo(
@@ -420,7 +420,7 @@ def upgrade_e_level3(energy_type):
     )
 
 
-def upgrade_forbid_file_level3(energy_type):
+def upgrade_forbid_file_level3(energy_type: Energy):
     global id
     id += 1
     return UpgradeGizmo(
@@ -433,7 +433,7 @@ def upgrade_forbid_file_level3(energy_type):
     )
 
 
-def upgrade_forbid_research_level3(energy_type):
+def upgrade_forbid_research_level3(energy_type: Energy):
     global id
     id += 1
     return UpgradeGizmo(
@@ -476,7 +476,7 @@ def upgrade_energy_as_point_level3():
     )
 
 
-def upgrade_build_from_filed_cost_reduction_level3(energy_type):
+def upgrade_build_from_filed_cost_reduction_level3(energy_type: Energy):
     global id
     id += 1
     return UpgradeGizmo(
@@ -487,7 +487,7 @@ def upgrade_build_from_filed_cost_reduction_level3(energy_type):
     )
 
 
-def upgrade_build_from_research_cost_reduction_level3(energy_type):
+def upgrade_build_from_research_cost_reduction_level3(energy_type: Energy):
     global id
     id += 1
     return UpgradeGizmo(
@@ -498,7 +498,7 @@ def upgrade_build_from_research_cost_reduction_level3(energy_type):
     )
 
 
-def file_draw_level3(energy_type):
+def file_draw_level3(energy_type: Energy):
     global id
     id += 1
     return FileGizmo(
@@ -512,7 +512,7 @@ def file_draw_level3(energy_type):
     )
 
 
-def file_point_level3(energy_type):
+def file_point_level3(energy_type: Energy):
     global id
     id += 1
     return FileGizmo(
@@ -526,17 +526,17 @@ def file_point_level3(energy_type):
     )
 
 
-def build_point_level3(energy_type, build_energy):
+def build_point_level3(energy_type: Energy, build_energy: Union[List[Energy], Literal['any']]):
     global id
     id += 1
     return BuildGizmo(
         id=id,
         **level3_common(5),
         energy_type=energy_type,
-        when_build=dict(
+        when_build={
             **BUILD_COMMON,
-            energy=build_energy,
-        ),
+            'energy': build_energy,
+        },
         effect=dict(
             type='add_point_token',
             num=2,
@@ -544,18 +544,18 @@ def build_point_level3(energy_type, build_energy):
     )
 
 
-def build_pick_level3(energy_type):
+def build_pick_level3(energy_type: Energy):
     global id
     id += 1
     return BuildGizmo(
         id=id,
         **level3_common(6),
         energy_type=energy_type,
-        when_build=dict(
-            level=[2],
-            energy='any',
-            method='any',
-        ),
+        when_build={
+            'level': [2],
+            'energy': 'any',
+            'method': 'any',
+        },
         effect=dict(
             type='free_pick',
             num=2,
@@ -563,18 +563,18 @@ def build_pick_level3(energy_type):
     )
 
 
-def build_from_file_point_level3(energy_type):
+def build_from_file_point_level3(energy_type: Energy):
     global id
     id += 1
     return BuildGizmo(
         id=id,
         **level3_common(5),
         energy_type=energy_type,
-        when_build=dict(
-            level='any',
-            method=[BuildMethod.FROM_FILED],
-            energy='any',
-        ),
+        when_build={
+            'level': 'any',
+            'method': [BuildMethod.FROM_FILED],
+            'energy': 'any',
+        },
         effect=dict(
             type='add_point_token',
             num=2,
@@ -582,24 +582,24 @@ def build_from_file_point_level3(energy_type):
     )
 
 
-def build_file_level3(energy_type, build_energy):
+def build_file_level3(energy_type: Energy, build_energy: Union[List[Energy], Literal['any']]):
     global id
     id += 1
     return BuildGizmo(
         id=id,
         **level3_common(5),
         energy_type=energy_type,
-        when_build=dict(
+        when_build={
             **BUILD_COMMON,
-            energy=build_energy,
-        ),
+            'energy': build_energy,
+        },
         effect=dict(
             type='extra_file',
         ),
     )
 
 
-def build_research_level3(energy_type, build_energy):
+def build_research_level3(energy_type: Energy, build_energy: Union[List[Energy], Literal['any']]):
     global id
     id += 1
     return BuildGizmo(
@@ -616,7 +616,7 @@ def build_research_level3(energy_type, build_energy):
     )
 
 
-def build_build_level3(energy_type, build_energy):
+def build_build_level3(energy_type: Energy, build_energy: Union[List[Energy], Literal['any']]):
     global id
     id += 1
     return BuildGizmo(
@@ -634,7 +634,7 @@ def build_build_level3(energy_type, build_energy):
     )
 
 
-def converter_double_level3(energy_type, from_energy):
+def converter_double_level3(energy_type: Energy, from_energy: List[Energy]):
     global id
     id += 1
     return ConverterGizmo(
@@ -654,7 +654,7 @@ def converter_double_level3(energy_type, from_energy):
         ))
 
 
-def converter_any_level3(energy_type):
+def converter_any_level3(energy_type: Energy):
     global id
     id += 1
     return ConverterGizmo(
@@ -676,7 +676,7 @@ def converter_any_level3(energy_type):
     )
 
 
-def converter_cost_reduction_level3(energy_type):
+def converter_cost_reduction_level3(energy_type: Energy):
     global id
     id += 1
     return ConverterGizmo(
