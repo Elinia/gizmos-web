@@ -648,7 +648,7 @@ class GizmosEnv(Env):
     def space_build_for_free(self) -> List[BuildForFreeAction]:
         if self.state['curr_stage'] != Stage.EXTRA_BUILD:
             return []
-        levels = self.state['free_build'].level if self.state['free_build'] else [
+        levels = self.state['free_build']['level'] if self.state['free_build'] else [
         ]
         avail_gizmos = [
             gizmo for level in levels for gizmo in self.state['gizmos_board'][level]]
