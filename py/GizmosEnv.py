@@ -47,7 +47,7 @@ if TYPE_CHECKING:
         energy_pool_num: int
         energy_board: List[Energy]
         gizmos_pool_num: Dict[GizmoLevel, int]
-        gizmos_board: Dict[GizmoLevel, List[Gizmo]]
+        gizmos_board: Dict[GizmoLevel, List[GizmoInfo]]
         researching: ResearchingInfo
         players: List[PlayerInfo]
         free_build: State.free_build
@@ -534,7 +534,10 @@ class GizmosEnv(Env):
                 2: list(map(lambda g: g.info, self.state['gizmos_board'][2])),
                 3: list(map(lambda g: g.info, self.state['gizmos_board'][3])),
             },
-            'researching': self.state['researching'] if is_curr_player else None,
+            'researching': {
+                'level': self.state['researching']['level'],
+                'gizmos': [g.info for g in self.state['researching']['gizmos']]
+            } if is_curr_player and self.state['researching'] is not None else None,
             'players': list(map(lambda g: g.info, self.state['players'])),
             'free_build': self.state['free_build'],
             'free_pick_num': self.state['free_pick_num'],
