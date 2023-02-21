@@ -160,10 +160,11 @@ Action = Union[PickAction,
 
 
 class GizmosEnv(Env):
-    def __init__(self, player_num=2, max_gizmos_num=16, max_level3_gizmos_num=4, check=True):
+    def __init__(self, player_num=2, max_gizmos_num=16, max_level3_gizmos_num=4, check=True, log=True):
         if player_num < 1 or max_gizmos_num < 2 or max_level3_gizmos_num < 1:
             raise ValueError('unsupported configuration')
         self.check = check
+        self.log = log
         self.player_num = player_num
         self.max_gizmos_num = max_gizmos_num
         self.max_level3_gizmos_num = max_level3_gizmos_num
@@ -431,10 +432,11 @@ class GizmosEnv(Env):
         self.state['curr_stage'] = Stage.MAIN
 
     def game_over(self):
-        print('game over')
-        print('turn:', self.state['curr_turn'])
-        for player in self.state['players']:
-            print(player.score)
+        if self.log:
+            print('game over')
+            print('turn:', self.state['curr_turn'])
+            for player in self.state['players']:
+                print(player.score)
         return
 
     # def get_reward(self, playerIndex):
@@ -450,7 +452,8 @@ class GizmosEnv(Env):
     #     return winner_reward if rank == 1 else loser_reward
 
     def step(self, playerIndex: int, action: Action):
-        print('[step]', playerIndex, action)
+        if self.log:
+            print('[step]', playerIndex, action)
         try:
             if playerIndex != self.state['curr_player_index']:
                 print('[step] not your turn')

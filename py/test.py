@@ -1,9 +1,11 @@
 from GizmosEnv import GizmosEnv
 from common import Stage
 
-env = GizmosEnv(player_num=1)
+env = GizmosEnv(player_num=1, check=False, log=False)
 
-while env.state['curr_stage'] != Stage.GAME_OVER:
-    # print(list(map(lambda g: g['id'], env.observation(0)['gizmos_board'][1])))
-    env.step(0, env.sample())
-    # print(len(env.observation(0)['action_space']))
+for i in range(100):
+    while env.state['curr_stage'] != Stage.GAME_OVER:
+        # print(list(map(lambda g: g['id'], env.observation(0)['gizmos_board'][1])))
+        env.step(0, env.sample())
+        # print(len(env.observation(0)['action_space']))
+    env.reset()
