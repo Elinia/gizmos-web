@@ -657,6 +657,8 @@ class GizmosEnv(Env):
     def space_research(self) -> List[ResearchAction]:
         if self.state['curr_stage'] not in [Stage.MAIN, Stage.EXTRA_RESEARCH]:
             return []
+        if self.curr_player.research_num <= 0:
+            return []
         levels = [1, 2, 3]
         avail_levels = [level for level in levels if len(
             self.state['gizmos_pool'][level]) > 0]

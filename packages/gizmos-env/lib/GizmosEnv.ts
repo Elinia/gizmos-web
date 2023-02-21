@@ -779,6 +779,9 @@ export class GizmosEnv {
     if (![Stage.MAIN, Stage.EXTRA_RESEARCH].includes(this.state.curr_stage)) {
       return []
     }
+    if (this.curr_player.research_num <= 0) {
+      return []
+    }
     const levels: GizmoLevel[] = [1, 2, 3]
     const avail_levels = levels.filter(
       level => this.state.gizmos_pool[level].length > 0
