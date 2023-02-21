@@ -641,17 +641,17 @@ def converter_double_level3(energy_type, from_energy):
         id=id,
         **level3_common(5),
         energy_type=energy_type,
-        formulae=map(lambda x: {
+        formulae=list(map(lambda energy: {
             'from': {
-                'energy': x['from'],
+                'energy': energy,
                 'num': 1,
             },
             'to': {
-                'energy': x['from'],
+                'energy': energy,
                 'num': 2,
             },
         }, from_energy),
-    )
+        ))
 
 
 def converter_any_level3(energy_type):
