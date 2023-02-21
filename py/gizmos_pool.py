@@ -747,17 +747,19 @@ class InitGizmos(TypedDict):
     gizmos_pool: Dict[GizmoLevel, List[Gizmo]]
 
 
+l0 = init_level0()
+l1 = init_level1()
+l2 = init_level2()
+l3 = init_level3()
+gizmos = [*l0, *l1, *l2, *l3]
+for g, i in zip(gizmos, range(len(gizmos))):
+    if g.id != i:
+        raise Exception('id inconsistent')
+
+
 def init_gizmos() -> InitGizmos:
-    global id
-    id = -1
-    l0 = init_level0()
-    l1 = init_level1()
-    l2 = init_level2()
-    l3 = init_level3()
-    gizmos = [*l0, *l1, *l2, *l3]
-    for g, i in zip(gizmos, range(len(gizmos))):
-        if g.id != i:
-            raise Exception('id inconsistent')
+    for gizmo in gizmos:
+        gizmo.reset()
     l1_s = list(l1)
     shuffle(l1_s)
     l2_s = list(l2)
