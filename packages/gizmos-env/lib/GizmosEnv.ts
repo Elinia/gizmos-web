@@ -334,7 +334,7 @@ export class GizmosEnv {
     if (!this.state.free_build) {
       throw new Error('[build_for_free] no free build')
     }
-    const gizmo = this.pick_gizmo_from_research(id)
+    const gizmo = this.pick_gizmo_from_board(id)
     if (!this.state.free_build.level.includes(gizmo.level)) {
       throw new Error('[build_for_free] wrong level')
     }
