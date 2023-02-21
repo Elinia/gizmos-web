@@ -2,7 +2,7 @@ from typing import List, Dict, TypedDict
 from queue import Queue
 
 from gizmos_utils import init_energy_num
-from Gizmo import ConverterGizmo
+from Gizmo import ConverterGizmo, ConverterFormula
 from common import Energy, EnergyWithAny
 from utils import proper_subsets, list_compose
 
@@ -31,10 +31,10 @@ def has_better_solution(solution: BuildSolution, solutions: List[BuildSolution])
     )
 
 
-def clone_solution(solution) -> BuildSolution:
+def clone_solution(ts: TmpBuildSolution) -> BuildSolution:
     return {
-        'energy_num': solution['energy_num'].copy(),
-        'gizmos': solution['gizmos'].copy(),
+        'energy_num': ts['energy_num'].copy(),
+        'gizmos': ts['gizmos'].copy(),
     }
 
 
@@ -65,7 +65,7 @@ def clone_ts(ts: TmpBuildSolution) -> TmpBuildSolution:
     }
 
 
-def apply_formula(ts: TmpBuildSolution, formula) -> bool:
+def apply_formula(ts: TmpBuildSolution, formula: ConverterFormula) -> bool:
     # assume `formula['from']['num']` always be 1
     if formula['from']['num'] != 1:
         raise Exception('formula.from.num not 1')
@@ -82,7 +82,7 @@ def apply_formula(ts: TmpBuildSolution, formula) -> bool:
     return True
 
 
-def apply_formula_any(ts: TmpBuildSolution, formula) -> bool:
+def apply_formula_any(ts: TmpBuildSolution, formula: ConverterFormula) -> bool:
     # assume `formula['from']['num']` always be 1
     if formula['from']['num'] != 1:
         raise Exception('formula.from.num not 1')
