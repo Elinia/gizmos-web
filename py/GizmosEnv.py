@@ -606,7 +606,7 @@ class GizmosEnv(Env):
         return actions
 
     def space_build_directly(self) -> list[BuildAction]:
-        if self.state['curr_stage'] not in [Stage.MAIN, Stage.EXTRA_BUILD]:
+        if self.state['curr_stage'] != Stage.MAIN:
             return []
         return self.space_build(
             self.all_board_gizmos,

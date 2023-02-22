@@ -727,7 +727,7 @@ export class GizmosEnv {
   }
 
   get space_build_directly(): Action[] {
-    if (![Stage.MAIN, Stage.EXTRA_BUILD].includes(this.state.curr_stage)) {
+    if (this.state.curr_stage !== Stage.MAIN) {
       return []
     }
     return this.space_build(
