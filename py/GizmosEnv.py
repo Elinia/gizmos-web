@@ -381,7 +381,7 @@ class GizmosEnv(Env):
         if not self.state['free_build']:
             raise Exception('[build_for_free] no free build')
         gizmo = self.pick_gizmo_from_board(id)
-        if not self.state['free_build'].level.includes(gizmo.level):
+        if gizmo.level not in self.state['free_build']['level']:
             raise Exception('[build_for_free] wrong level')
         self.curr_player.build_for_free(gizmo)
         self.state['free_build'] = None
