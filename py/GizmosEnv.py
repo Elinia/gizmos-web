@@ -448,7 +448,8 @@ class GizmosEnv(Env):
                 print('[step] not your turn')
                 return
             if not self.action_avail(action['type']):
-                print('[step] action {} unavailable'.format(action['type']))
+                print('[step] action {} unavailable, stage: {}'.format(
+                    action['type'], self.state['curr_stage']))
                 return
             if action['type'] == ActionType.PICK:
                 self.pick(action['energy'])
