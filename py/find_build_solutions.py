@@ -1,4 +1,4 @@
-from typing import Callable, List, Dict, Tuple, TypedDict
+from typing import Callable, TypedDict
 from queue import Queue
 
 from gizmos_utils import init_energy_num
@@ -10,20 +10,20 @@ ALL_ENERGY_TYPES = ['red', 'blue', 'black', 'yellow']
 
 
 class BuildSolution(TypedDict):
-    gizmos: List[ConverterGizmo]
-    energy_num: Dict[Energy, int]
+    gizmos: list[ConverterGizmo]
+    energy_num: dict[Energy, int]
 
 
 class TmpBuildSolution(TypedDict):
     energy_cost: int
-    avail_energy: Dict[Energy, int]
-    avail_gizmos: List[ConverterGizmo]
-    extra_energy: Dict[EnergyWithAny, int]
-    gizmos: List[ConverterGizmo]
-    energy_num: Dict[Energy, int]
+    avail_energy: dict[Energy, int]
+    avail_gizmos: list[ConverterGizmo]
+    extra_energy: dict[EnergyWithAny, int]
+    gizmos: list[ConverterGizmo]
+    energy_num: dict[Energy, int]
 
 
-def has_better_solution(solution: BuildSolution, solutions: List[BuildSolution]) -> bool:
+def has_better_solution(solution: BuildSolution, solutions: list[BuildSolution]) -> bool:
     return any(
         s for s in solutions
         if all(s['energy_num'][curr] <= solution['energy_num'][curr] for curr in ALL_ENERGY_TYPES)
@@ -98,7 +98,7 @@ def apply_formula_any(ts: TmpBuildSolution, formula: ConverterFormula) -> bool:
     return True
 
 
-Option = Tuple[ConverterFormula, Callable[[
+Option = tuple[ConverterFormula, Callable[[
     TmpBuildSolution, ConverterFormula], bool]]
 
 
@@ -114,8 +114,8 @@ def not_from_any_formula(formula) -> bool:
 def find_build_solutions(
     energy_type: Energy,
     energy_cost: int,
-    avail_energy: Dict[Energy, int],
-    avail_gizmos: List[ConverterGizmo],
+    avail_energy: dict[Energy, int],
+    avail_gizmos: list[ConverterGizmo],
     check_only: bool,
 ):
     tmp_solutions: Queue[TmpBuildSolution] = Queue()
@@ -127,7 +127,7 @@ def find_build_solutions(
         'gizmos': [],
         'energy_num': init_energy_num(),
     })
-    solutions: List[BuildSolution] = []
+    solutions: list[BuildSolution] = []
 
     def apply_solution(solution: BuildSolution) -> bool:
         nonlocal solutions
@@ -208,9 +208,9 @@ def find_build_solutions(
 
             # try all possible formula combinations of the gizmo
             for formulae in proper_subsets(gizmo.formulae):
-                opt_groups: List[List[Option]] = []
+                opt_groups: list[list[Option]] = []
                 for formula in formulae:
-                    options: List[Option] = []
+                    options: list[Option] = []
                     if not_from_any_formula(formula):
                         options.append((formula, apply_formula))
                         if formula['to']['num'] > 1:

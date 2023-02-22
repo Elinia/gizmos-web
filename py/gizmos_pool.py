@@ -1,5 +1,5 @@
 from random import shuffle
-from typing import Dict, List, Literal, TypedDict, Union
+from typing import Literal, TypedDict
 
 from common import BuildMethod, Energy, GizmoLevel
 from Gizmo import Gizmo, BuildGizmo, ConverterGizmo, FileGizmo, PickGizmo, UpgradeGizmo
@@ -24,7 +24,7 @@ def file_draw_level0():
     )
 
 
-def init_level0() -> List[Gizmo]:
+def init_level0() -> list[Gizmo]:
     return [
         file_draw_level0(),
         file_draw_level0(),
@@ -33,13 +33,13 @@ def init_level0() -> List[Gizmo]:
     ]
 
 
-LEVEL1_COMMON = {
+LEVEL1_COMMON: dict[Literal['level', 'energy_cost', 'value'], int] = {
     'level': 1,
     'energy_cost': 1,
     'value': 1,
 }
 
-BUILD_COMMON = {
+BUILD_COMMON: dict[Literal['level', 'method'], Literal['any']] = {
     'level': 'any',
     'method': 'any',
 }
@@ -156,7 +156,7 @@ def converter_level1(energy_type: Energy, from_energy: Energy):
     )
 
 
-def init_level1() -> List[Gizmo]:
+def init_level1() -> list[Gizmo]:
     return [
         build_point_level1('yellow', 'blue'),
         build_point_level1('blue', 'black'),
@@ -332,7 +332,7 @@ def build_from_file_pick_level2(energy_type: Energy):
     )
 
 
-def pick_draw_level2(energy_type: Energy, pick_energy: List[Energy]):
+def pick_draw_level2(energy_type: Energy, pick_energy: list[Energy]):
     global id
     id += 1
     return PickGizmo(
@@ -360,7 +360,7 @@ def upgrade_level2(energy_type: Energy):
     )
 
 
-def init_level2() -> List[Gizmo]:
+def init_level2() -> list[Gizmo]:
     return [
         converter_double_level2('red', 'black'),
         converter_double_level2('black', 'red'),
@@ -526,7 +526,7 @@ def file_point_level3(energy_type: Energy):
     )
 
 
-def build_point_level3(energy_type: Energy, build_energy: Union[List[Energy], Literal['any']]):
+def build_point_level3(energy_type: Energy, build_energy: list[Energy] | Literal['any']):
     global id
     id += 1
     return BuildGizmo(
@@ -582,7 +582,7 @@ def build_from_file_point_level3(energy_type: Energy):
     )
 
 
-def build_file_level3(energy_type: Energy, build_energy: Union[List[Energy], Literal['any']]):
+def build_file_level3(energy_type: Energy, build_energy: list[Energy] | Literal['any']):
     global id
     id += 1
     return BuildGizmo(
@@ -599,7 +599,7 @@ def build_file_level3(energy_type: Energy, build_energy: Union[List[Energy], Lit
     )
 
 
-def build_research_level3(energy_type: Energy, build_energy: Union[List[Energy], Literal['any']]):
+def build_research_level3(energy_type: Energy, build_energy: list[Energy] | Literal['any']):
     global id
     id += 1
     return BuildGizmo(
@@ -616,7 +616,7 @@ def build_research_level3(energy_type: Energy, build_energy: Union[List[Energy],
     )
 
 
-def build_build_level3(energy_type: Energy, build_energy: Union[List[Energy], Literal['any']]):
+def build_build_level3(energy_type: Energy, build_energy: list[Energy] | Literal['any']):
     global id
     id += 1
     return BuildGizmo(
@@ -634,7 +634,7 @@ def build_build_level3(energy_type: Energy, build_energy: Union[List[Energy], Li
     )
 
 
-def converter_double_level3(energy_type: Energy, from_energy: List[Energy]):
+def converter_double_level3(energy_type: Energy, from_energy: list[Energy]):
     global id
     id += 1
     return ConverterGizmo(
@@ -701,7 +701,7 @@ def converter_cost_reduction_level3(energy_type: Energy):
     )
 
 
-def init_level3() -> List[Gizmo]:
+def init_level3() -> list[Gizmo]:
     return [
         upgrade_e_level3('blue'),
         upgrade_e_level3('black'),
@@ -743,8 +743,8 @@ def init_level3() -> List[Gizmo]:
 
 
 class InitGizmos(TypedDict):
-    gizmos: List[Gizmo]
-    gizmos_pool: Dict[GizmoLevel, List[Gizmo]]
+    gizmos: list[Gizmo]
+    gizmos_pool: dict[GizmoLevel, list[Gizmo]]
 
 
 l0 = init_level0()

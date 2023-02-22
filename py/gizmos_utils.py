@@ -1,9 +1,7 @@
-from typing import Dict, Optional, Union
-
 from common import Energy
 
 
-def init_energy_num(energy_num: Optional[Dict[Energy, Union[int, None]]] = None) -> Dict[Energy, int]:
+def init_energy_num(energy_num: dict[Energy, int | None] | None = None) -> dict[Energy, int]:
     return {
         'red': energy_num.get('red', 0) if energy_num is not None else 0,
         'black': energy_num.get('black', 0) if energy_num is not None else 0,

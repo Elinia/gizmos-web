@@ -1,9 +1,9 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Set, TypedDict, List, Dict, Optional
+from typing import TYPE_CHECKING, TypedDict
 from gizmos_utils import init_energy_num
 from common import ALL_ENERGY_TYPES, BuildMethod, Energy
 from find_build_solutions import find_build_solutions
-from Gizmo import Gizmo, GizmoInfo, is_upgrade_gizmo, is_converter_gizmo, is_pick_gizmo, is_build_gizmo, is_file_gizmo, GizmoType, Gizmo, BuildGizmo, ConverterGizmo, FileGizmo, PickGizmo, UpgradeGizmo
+from Gizmo import Gizmo, GizmoInfo, is_upgrade_gizmo, is_converter_gizmo, is_pick_gizmo, is_build_gizmo, is_file_gizmo, GizmoType, Gizmo, BuildGizmo, ConverterGizmo, FileGizmo, PickGizmo, UpgradeGizmo, GizmoBuild, GizmoConverter, GizmoPick, GizmoUpgrade
 
 BASE_MAX_ENERGY = 5
 BASE_MAX_FILE = 1
@@ -13,27 +13,35 @@ if TYPE_CHECKING:
     from GizmosEnv import GizmosEnv
 
 
-def calc_total_energy_num(energy_num):
+def calc_total_energy_num(energy_num: dict[Energy, int]):
     return sum(energy_num.values())
+
+
+class GizmosByType(TypedDict):
+    GizmoType.UPGRADE: set[UpgradeGizmo]
+    GizmoType.CONVERTER: set[ConverterGizmo]
+    GizmoType.PICK: set[PickGizmo]
+    GizmoType.BUILD: set[BuildGizmo]
+    GizmoType.FILE: set[FileGizmo]
 
 
 class PlayerInfo(TypedDict):
     index: int
-    gizmos: List[Gizmo]
-    upgrade_gizmos: List[GizmoInfo]
-    converter_gizmos: List[GizmoInfo]
-    pick_gizmos: List[GizmoInfo]
-    build_gizmos: List[GizmoInfo]
-    file_gizmos: List[GizmoInfo]
-    level3_gizmos: List[GizmoInfo]
-    filed: List[GizmoInfo]
+    gizmos: list[Gizmo]
+    upgrade_gizmos: list[GizmoInfo & GizmoUpgrade]
+    converter_gizmos: list[GizmoInfo & GizmoConverter]
+    pick_gizmos: list[GizmoInfo & GizmoPick]
+    build_gizmos: list[GizmoInfo & GizmoBuild]
+    file_gizmos: list[GizmoInfo]
+    level3_gizmos: list[GizmoInfo]
+    filed: list[GizmoInfo]
     point_token: int
     max_energy_num: int
     max_file_num: int
     research_num: int
     build_from_filed_cost_reduction: int
     build_from_research_cost_reduction: int
-    energy_num: Dict[Energy, int]
+    energy_num: dict[Energy, int]
     total_energy_num: int
     score: int
 
@@ -42,10 +50,10 @@ class Player:
     def __init__(self,
                  env: GizmosEnv,
                  index: int,
-                 gizmos: Optional[List[Gizmo]] = None,
-                 point_token: Optional[int] = None,
-                 energy_num: Optional[Dict[Energy, int]] = None,
-                 filed: Optional[List[Gizmo]] = None):
+                 gizmos: list[Gizmo] | None = None,
+                 point_token: int | None = None,
+                 energy_num: dict[Energy, int] | None = None,
+                 filed: list[Gizmo] | None = None):
         self.env = env
         self.index = index
         self.max_energy_num = BASE_MAX_ENERGY
@@ -53,8 +61,8 @@ class Player:
         self.research_num = BASE_RESEARCH_NUM
         self.build_from_filed_cost_reduction = 0
         self.build_from_research_cost_reduction = 0
-        self.gizmos: Set[Gizmo] = set()
-        self.gizmos_by_type = {
+        self.gizmos: set[Gizmo] = set()
+        self.gizmos_by_type: GizmosByType = {
             GizmoType.PICK: set(),
             GizmoType.BUILD: set(),
             GizmoType.UPGRADE: set(),
@@ -109,7 +117,7 @@ class Player:
         for g in self.file_gizmos:
             g.on_file()
 
-    def build(self, gizmo: Gizmo, cost_energy_num: Dict[Energy, int], cost_converter_gizmos_id: List[int], method=BuildMethod.DIRECTLY):
+    def build(self, gizmo: Gizmo, cost_energy_num: dict[Energy, int], cost_converter_gizmos_id: list[int], method=BuildMethod.DIRECTLY):
         converter_gizmos = [
             g for g in self.converter_gizmos if g.id in cost_converter_gizmos_id]
         if len(converter_gizmos) != len(cost_converter_gizmos_id):
@@ -125,12 +133,12 @@ class Player:
             g.on_build(self, gizmo.level, gizmo.energy_type, method)
         self.add_gizmo(gizmo)
 
-    def build_from_filed(self, id: int, cost_energy_num: Dict[Energy, int], cost_converter_gizmos_id: List[int]):
+    def build_from_filed(self, id: int, cost_energy_num: dict[Energy, int], cost_converter_gizmos_id: list[int]):
         gizmo = self.pick_from_file(id)
         self.build(gizmo, cost_energy_num,
                    cost_converter_gizmos_id, BuildMethod.FROM_FILED)
 
-    def build_from_research(self, gizmo: Gizmo, cost_energy_num: Dict[Energy, int], cost_converter_gizmos_id: List[int]):
+    def build_from_research(self, gizmo: Gizmo, cost_energy_num: dict[Energy, int], cost_converter_gizmos_id: list[int]):
         self.build(gizmo, cost_energy_num, cost_converter_gizmos_id,
                    BuildMethod.FROM_RESEARCH)
 
@@ -140,7 +148,7 @@ class Player:
                        BuildMethod.DIRECTLY)
         self.add_gizmo(gizmo)
 
-    def drop(self, energy_num: Dict[Energy, int]):
+    def drop(self, energy_num: dict[Energy, int]):
         for energy in ALL_ENERGY_TYPES:
             if self.energy_num[energy] < energy_num[energy]:
                 raise Exception('not enough energy to drop')
@@ -208,23 +216,23 @@ class Player:
         return calc_total_energy_num(self.energy_num)
 
     @property
-    def upgrade_gizmos(self) -> Set[UpgradeGizmo]:
+    def upgrade_gizmos(self) -> set[UpgradeGizmo]:
         return self.gizmos_by_type[GizmoType.UPGRADE]
 
     @property
-    def converter_gizmos(self) -> Set[ConverterGizmo]:
+    def converter_gizmos(self) -> set[ConverterGizmo]:
         return self.gizmos_by_type[GizmoType.CONVERTER]
 
     @property
-    def pick_gizmos(self) -> Set[PickGizmo]:
+    def pick_gizmos(self) -> set[PickGizmo]:
         return self.gizmos_by_type[GizmoType.PICK]
 
     @property
-    def build_gizmos(self) -> Set[BuildGizmo]:
+    def build_gizmos(self) -> set[BuildGizmo]:
         return self.gizmos_by_type[GizmoType.BUILD]
 
     @property
-    def file_gizmos(self) -> Set[FileGizmo]:
+    def file_gizmos(self) -> set[FileGizmo]:
         return self.gizmos_by_type[GizmoType.FILE]
 
     @property
@@ -239,7 +247,7 @@ class Player:
             reduction += self.build_from_research_cost_reduction
         return reduction
 
-    def build_solutions(self, gizmo: Gizmo, method: BuildMethod, cost_energy_num: Dict[Energy, int], cost_converter_gizmos: List[Gizmo], check_only=False):
+    def build_solutions(self, gizmo: Gizmo, method: BuildMethod, cost_energy_num: dict[Energy, int], cost_converter_gizmos: list[ConverterGizmo], check_only=False):
         if gizmo in self.gizmos:
             print('[build_solutions] already built')
             return []

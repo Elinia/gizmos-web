@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Dict, List, Set, Union, TypedDict, TYPE_CHECKING
+from typing import TypedDict, TYPE_CHECKING
 from random import shuffle, choice
 from enum import Enum, auto
 from gymnasium import Env
@@ -15,29 +15,29 @@ if TYPE_CHECKING:
 
     class Researching(TypedDict):
         level: GizmoLevel
-        gizmos: List[Gizmo]
+        gizmos: list[Gizmo]
 
     class FreeBuild(TypedDict):
-        level: List[GizmoLevel]
+        level: list[GizmoLevel]
 
     class State(TypedDict):
         curr_turn: int
         curr_stage: Stage
         curr_player_index: int
         is_last_turn: bool
-        energy_pool: List[Energy]
-        energy_board: List[Energy]
-        gizmos: List[Gizmo]
-        gizmos_pool: Dict[GizmoLevel, List[Gizmo]]
-        gizmos_board: Dict[GizmoLevel, List[Gizmo]]
-        players: List[Player]
+        energy_pool: list[Energy]
+        energy_board: list[Energy]
+        gizmos: list[Gizmo]
+        gizmos_pool: dict[GizmoLevel, list[Gizmo]]
+        gizmos_board: dict[GizmoLevel, list[Gizmo]]
+        players: list[Player]
         researching: None | Researching
         free_build: None | FreeBuild
         free_pick_num: int
 
     class ResearchingInfo(TypedDict):
         level: GizmoLevel
-        gizmos: List[GizmoInfo]
+        gizmos: list[GizmoInfo]
 
     class Observation(TypedDict):
         curr_turn: int
@@ -45,15 +45,15 @@ if TYPE_CHECKING:
         curr_player_index: int
         is_last_turn: bool
         energy_pool_num: int
-        energy_board: List[Energy]
-        gizmos_pool_num: Dict[GizmoLevel, int]
-        gizmos_board: Dict[GizmoLevel, List[GizmoInfo]]
+        energy_board: list[Energy]
+        gizmos_pool_num: dict[GizmoLevel, int]
+        gizmos_board: dict[GizmoLevel, list[GizmoInfo]]
         researching: ResearchingInfo
-        players: List[PlayerInfo]
+        players: list[PlayerInfo]
         free_build: State.free_build
         free_pick_num: State.free_pick_num
         truncated: bool
-        action_space: List[Action]
+        action_space: list[Action]
 
 
 def init_player(env: GizmosEnv, index: int):
@@ -92,29 +92,29 @@ class FileFromResearchAction(TypedDict):
 
 class ActionBuildSolution(TypedDict):
     id: int
-    cost_energy_num: Dict[Energy, int]
-    cost_converter_gizmos_id: List[int]
+    cost_energy_num: dict[Energy, int]
+    cost_converter_gizmos_id: list[int]
 
 
 class BuildAction(TypedDict):
     type: ActionType.BUILD
     id: int
-    cost_energy_num: Dict[Energy, int]
-    cost_converter_gizmos_id: List[int]
+    cost_energy_num: dict[Energy, int]
+    cost_converter_gizmos_id: list[int]
 
 
 class BuildFromFileAction(TypedDict):
     type: ActionType.BUILD_FROM_FILED
     id: int
-    cost_energy_num: Dict[Energy, int]
-    cost_converter_gizmos_id: List[int]
+    cost_energy_num: dict[Energy, int]
+    cost_converter_gizmos_id: list[int]
 
 
 class BuildFromResearchAction(TypedDict):
     type: ActionType.BUILD_FROM_RESEARCH
     id: int
-    cost_energy_num: Dict[Energy, int]
-    cost_converter_gizmos_id: List[int]
+    cost_energy_num: dict[Energy, int]
+    cost_converter_gizmos_id: list[int]
 
 
 class BuildForFreeAction(TypedDict):
@@ -129,7 +129,7 @@ class ResearchAction(TypedDict):
 
 class ChooseTriggerAction(TypedDict):
     type: ActionType.CHOOSE_TRIGGER
-    gizmos: List[int]
+    gizmos: list[int]
 
 
 class UseGizmoAction(TypedDict):
@@ -145,18 +145,7 @@ class EndAction(TypedDict):
     type: ActionType.END
 
 
-Action = Union[PickAction,
-               FileAction,
-               FileFromResearchAction,
-               BuildAction,
-               BuildFromFileAction,
-               BuildFromResearchAction,
-               BuildForFreeAction,
-               ResearchAction,
-               ChooseTriggerAction,
-               UseGizmoAction,
-               GiveUpAction,
-               EndAction]
+Action = PickAction | FileAction | FileFromResearchAction | BuildAction | BuildFromFileAction | BuildFromResearchAction | BuildForFreeAction | ResearchAction | ChooseTriggerAction | UseGizmoAction | GiveUpAction | EndAction
 
 
 class GizmosEnv(Env):
@@ -230,7 +219,7 @@ class GizmosEnv(Env):
         del self.state['gizmos_pool'][level][:min(num, _len)]
         return gizmos
 
-    def drop_gizmos_to_pool(self, level: GizmoLevel, gizmos: List[Gizmo]):
+    def drop_gizmos_to_pool(self, level: GizmoLevel, gizmos: list[Gizmo]):
         self.state['gizmos_pool'][level] += gizmos
         shuffle(self.state['gizmos_pool'][level])
 
@@ -251,7 +240,7 @@ class GizmosEnv(Env):
         del self.state['energy_pool'][:min(num, _len)]
         return energy
 
-    def drop_energy_to_pool(self, energy_num: Dict[Energy, int]):
+    def drop_energy_to_pool(self, energy_num: dict[Energy, int]):
         energy_list = []
         for energy in ALL_ENERGY_TYPES:
             energy_list += [energy]*energy_num[energy]
@@ -292,7 +281,7 @@ class GizmosEnv(Env):
 
     @property
     def avail_actions(self):
-        actions: Set[Action] = set()
+        actions: set[Action] = set()
         if self.state['curr_stage'] == Stage.MAIN:
             actions.add(ActionType.END)
             if len(self.state['energy_board']) > 0:
@@ -359,18 +348,18 @@ class GizmosEnv(Env):
         self.curr_player.file(gizmo)
         self.state['curr_stage'] = Stage.TRIGGER
 
-    def build(self, id: int, cost_energy_num: Dict[Energy, int], cost_converter_gizmos_id: List[int]):
+    def build(self, id: int, cost_energy_num: dict[Energy, int], cost_converter_gizmos_id: list[int]):
         gizmo = self.pick_gizmo_from_board(id)
         self.curr_player.build(gizmo, cost_energy_num,
                                cost_converter_gizmos_id)
         self.state['curr_stage'] = Stage.TRIGGER
 
-    def build_from_filed(self, id: int, cost_energy_num: Dict[Energy, int], cost_converter_gizmos_id: List[int]):
+    def build_from_filed(self, id: int, cost_energy_num: dict[Energy, int], cost_converter_gizmos_id: list[int]):
         self.curr_player.build_from_filed(
             id, cost_energy_num, cost_converter_gizmos_id)
         self.state['curr_stage'] = Stage.TRIGGER
 
-    def build_from_research(self, id: int, cost_energy_num: Dict[Energy, int], cost_converter_gizmos_id: List[int]):
+    def build_from_research(self, id: int, cost_energy_num: dict[Energy, int], cost_converter_gizmos_id: list[int]):
         gizmo = self.pick_gizmo_from_research(id)
         self.curr_player.build_from_research(
             gizmo, cost_energy_num, cost_converter_gizmos_id)
@@ -533,15 +522,15 @@ class GizmosEnv(Env):
                 3: self.gizmos_pool_len(3),
             },
             'gizmos_board': {
-                1: list(map(lambda g: g.info, self.state['gizmos_board'][1])),
-                2: list(map(lambda g: g.info, self.state['gizmos_board'][2])),
-                3: list(map(lambda g: g.info, self.state['gizmos_board'][3])),
+                1: [g.info for g in self.state['gizmos_board'][1]],
+                2: [g.info for g in self.state['gizmos_board'][2]],
+                3: [g.info for g in self.state['gizmos_board'][3]],
             },
             'researching': {
                 'level': self.state['researching']['level'],
                 'gizmos': [g.info for g in self.state['researching']['gizmos']]
             } if is_curr_player and self.state['researching'] is not None else None,
-            'players': list(map(lambda g: g.info, self.state['players'])),
+            'players': [p.info for p in self.state['players']],
             'free_build': self.state['free_build'],
             'free_pick_num': self.state['free_pick_num'],
             'truncated': self.truncated,
@@ -564,14 +553,14 @@ class GizmosEnv(Env):
     def can_build(self, gizmo: Gizmo, method: BuildMethod):
         return len(self.build_solutions(gizmo, method, True)) > 0
 
-    def buildable_gizmos(self, gizmos: List[Gizmo] | Set[Gizmo], method: BuildMethod):
+    def buildable_gizmos(self, gizmos: list[Gizmo] | set[Gizmo], method: BuildMethod):
         return [g for g in gizmos if self.can_build(g, method)]
 
     @property
     def all_board_gizmos(self):
         return self.state['gizmos_board'][1] + self.state['gizmos_board'][2] + self.state['gizmos_board'][3]
 
-    def space_pick(self) -> List[PickAction]:
+    def space_pick(self) -> list[PickAction]:
         if self.state['curr_stage'] not in [Stage.MAIN, Stage.EXTRA_PICK]:
             return []
         if not self.curr_player.can_add_energy:
@@ -581,7 +570,7 @@ class GizmosEnv(Env):
             'energy': energy,
         } for energy in self.state['energy_board']]
 
-    def space_file(self) -> List[FileAction]:
+    def space_file(self) -> list[FileAction]:
         if self.state['curr_stage'] not in [Stage.MAIN, Stage.EXTRA_FILE]:
             return []
         if not self.curr_player.can_file:
@@ -591,7 +580,7 @@ class GizmosEnv(Env):
             'id': gizmo.id,
         } for gizmo in self.all_board_gizmos]
 
-    def space_file_from_research(self) -> List[FileFromResearchAction]:
+    def space_file_from_research(self) -> list[FileFromResearchAction]:
         if self.state['curr_stage'] != Stage.RESEARCH:
             return []
         researching = self.state['researching']
@@ -604,7 +593,7 @@ class GizmosEnv(Env):
             'id': gizmo.id,
         } for gizmo in researching['gizmos']]
 
-    def space_build(self, gizmos: List[Gizmo], method: BuildMethod, action_type: ActionType) -> List[BuildAction | BuildFromFileAction | BuildFromResearchAction]:
+    def space_build(self, gizmos: list[Gizmo], method: BuildMethod, action_type: ActionType) -> list[BuildAction | BuildFromFileAction | BuildFromResearchAction]:
         actions = []
         for gizmo in gizmos:
             for solution in self.build_solutions(gizmo, method):
@@ -616,7 +605,7 @@ class GizmosEnv(Env):
                 })
         return actions
 
-    def space_build_directly(self) -> List[BuildAction]:
+    def space_build_directly(self) -> list[BuildAction]:
         if self.state['curr_stage'] not in [Stage.MAIN, Stage.EXTRA_BUILD]:
             return []
         return self.space_build(
@@ -625,7 +614,7 @@ class GizmosEnv(Env):
             ActionType.BUILD,
         )
 
-    def space_build_from_file(self) -> List[BuildFromFileAction]:
+    def space_build_from_file(self) -> list[BuildFromFileAction]:
         if self.state['curr_stage'] != Stage.MAIN:
             return []
         return self.space_build(
@@ -634,7 +623,7 @@ class GizmosEnv(Env):
             ActionType.BUILD_FROM_FILED,
         )
 
-    def space_build_from_research(self) -> List[BuildFromResearchAction]:
+    def space_build_from_research(self) -> list[BuildFromResearchAction]:
         if self.state['curr_stage'] != Stage.RESEARCH:
             return []
         researching_gizmos = self.state['researching']['gizmos'] if self.state['researching'] else [
@@ -645,7 +634,7 @@ class GizmosEnv(Env):
             ActionType.BUILD_FROM_RESEARCH,
         )
 
-    def space_build_for_free(self) -> List[BuildForFreeAction]:
+    def space_build_for_free(self) -> list[BuildForFreeAction]:
         if self.state['curr_stage'] != Stage.EXTRA_BUILD:
             return []
         levels = self.state['free_build']['level'] if self.state['free_build'] else [
@@ -657,7 +646,7 @@ class GizmosEnv(Env):
             'id': gizmo.id,
         } for gizmo in avail_gizmos]
 
-    def space_research(self) -> List[ResearchAction]:
+    def space_research(self) -> list[ResearchAction]:
         if self.state['curr_stage'] not in [Stage.MAIN, Stage.EXTRA_RESEARCH]:
             return []
         if self.curr_player.research_num <= 0:
@@ -670,7 +659,7 @@ class GizmosEnv(Env):
             'level': level,
         } for level in avail_levels]
 
-    def space_use_gizmo(self) -> List[UseGizmoAction]:
+    def space_use_gizmo(self) -> list[UseGizmoAction]:
         if self.state['curr_stage'] != Stage.TRIGGER:
             return []
         return [{
@@ -678,7 +667,7 @@ class GizmosEnv(Env):
             'id': gizmo.id,
         } for gizmo in self.curr_player.avail_gizmos]
 
-    def space_give_up(self) -> List[GiveUpAction]:
+    def space_give_up(self) -> list[GiveUpAction]:
         if self.state['curr_stage'] not in [
             Stage.EXTRA_PICK,
             Stage.EXTRA_BUILD,
@@ -689,13 +678,13 @@ class GizmosEnv(Env):
             return []
         return [{'type': ActionType.GIVE_UP}]
 
-    def space_end(self) -> List[EndAction]:
+    def space_end(self) -> list[EndAction]:
         if self.state['curr_stage'] not in [Stage.MAIN, Stage.TRIGGER]:
             return []
         return [{'type': ActionType.END}]
 
     @property
-    def action_space(self) -> List[Action]:
+    def action_space(self) -> list[Action]:
         return [
             *self.space_pick(),
             *self.space_file(),

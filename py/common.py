@@ -1,5 +1,5 @@
 from enum import Enum, auto
-from typing import List, Literal
+from typing import Literal
 
 
 class BuildMethod(Enum):
@@ -10,7 +10,7 @@ class BuildMethod(Enum):
 
 Energy = Literal['red', 'blue', 'black', 'yellow']
 
-ALL_ENERGY_TYPES: List[Energy] = ['red', 'blue', 'black', 'yellow']
+ALL_ENERGY_TYPES: list[Energy] = ['red', 'blue', 'black', 'yellow']
 ALL_GIZMO_LEVELS = [0, 1, 2, 3]
 GIZMO_LEVELS = [1, 2, 3]
 ALL_BUILD_METHODS = [

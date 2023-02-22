@@ -1,6 +1,6 @@
 from __future__ import annotations
 from enum import Enum, auto
-from typing import Dict, List, Literal, Optional, Union, TypedDict, TYPE_CHECKING
+from typing import Literal, TypeGuard, TypedDict, TYPE_CHECKING
 
 from common import GizmoLevel, EnergyWithAny, Energy, AllGizmoLevel, BuildMethod, Stage
 
@@ -45,7 +45,7 @@ class ExtraResearchEffect(TypedDict):
 
 class ExtraBuildEffect(TypedDict):
     type: Literal['extra_build']
-    level: List[GizmoLevel]
+    level: list[GizmoLevel]
 
 
 class EnergyAsPointEffect(TypedDict):
@@ -56,17 +56,7 @@ class TokenAsPointEffect(TypedDict):
     type: Literal['token_as_point']
 
 
-Effect = Union[
-    NaEffect,
-    FreeDrawEffect,
-    FreePickEffect,
-    AddPointTokenEffect,
-    ExtraFileEffect,
-    ExtraResearchEffect,
-    ExtraBuildEffect,
-    EnergyAsPointEffect,
-    TokenAsPointEffect,
-]
+Effect = NaEffect | FreeDrawEffect | FreePickEffect | AddPointTokenEffect | ExtraFileEffect | ExtraResearchEffect | ExtraBuildEffect | EnergyAsPointEffect | TokenAsPointEffect
 
 
 class GizmoBasic(TypedDict):
@@ -75,7 +65,7 @@ class GizmoBasic(TypedDict):
     energy_type: EnergyWithAny
     energy_cost: int
     value: int
-    effect: Optional[Effect]
+    effect: Effect | None
 
 
 class GizmoInfo(TypedDict):
@@ -146,7 +136,7 @@ class Gizmo:
     def extra_research(self, player: Player):
         player.env.state['curr_stage'] = Stage.EXTRA_RESEARCH
 
-    def extra_build(self, player: Player, level: List[GizmoLevel]):
+    def extra_build(self, player: Player, level: list[GizmoLevel]):
         player.env.state['free_build'] = {'level': level}
         player.env.state['curr_stage'] = Stage.EXTRA_BUILD
 
@@ -188,12 +178,12 @@ class Gizmo:
 
 
 class GizmoPick(TypedDict):
-    when_pick: List[Energy]
+    when_pick: list[Energy]
 
 
 class PickGizmo(Gizmo):
     type = GizmoType.PICK
-    when_pick: List[Energy]
+    when_pick: list[Energy]
 
     def is_satisfied(self, energy: Energy) -> bool:
         return energy in self.when_pick
@@ -211,15 +201,15 @@ class PickGizmo(Gizmo):
             'when_pick': self.when_pick,
         }
 
-    def __init__(self, when_pick: List[Energy], **basic: GizmoBasic):
+    def __init__(self, when_pick: list[Energy], **basic: GizmoBasic):
         super().__init__(**basic)
         self.when_pick = when_pick
 
 
 class WhenBuild(TypedDict):
-    energy: Union[List[Energy], Literal['any']]
-    level: Union[List[AllGizmoLevel], Literal['any']]
-    method: Union[List[BuildMethod], Literal['any']]
+    energy: list[Energy] | Literal['any']
+    level: list[AllGizmoLevel] | Literal['any']
+    method: list[BuildMethod] | Literal['any']
 
 
 class GizmoBuild(TypedDict):
@@ -258,11 +248,11 @@ class BuildGizmo(Gizmo):
 
 
 class GizmoUpgrade(TypedDict):
-    max_energy_num: Optional[int]
-    max_file_num: Optional[int]
-    research_num: Optional[int]
-    build_from_filed_cost_reduction: Optional[int]
-    build_from_research_cost_reduction: Optional[int]
+    max_energy_num: int | None
+    max_file_num: int | None
+    research_num: int | None
+    build_from_filed_cost_reduction: int | None
+    build_from_research_cost_reduction: int | None
 
 
 class UpgradeGizmo(Gizmo):
@@ -300,22 +290,22 @@ class FormulaSide(TypedDict):
     num: int
 
 
-ConverterFormula = Dict[Literal['from', 'to'], FormulaSide]
+ConverterFormula = dict[Literal['from', 'to'], FormulaSide]
 
 
 class Prerequisite(TypedDict):
-    level: List[AllGizmoLevel]
+    level: list[AllGizmoLevel]
 
 
 class GizmoConverter(TypedDict):
-    prerequisite: Optional[Prerequisite]
-    formulae: List[ConverterFormula]
+    prerequisite: Prerequisite | None
+    formulae: list[ConverterFormula]
 
 
 class ConverterGizmo(Gizmo):
     type = GizmoType.CONVERTER
-    prerequisite: Optional[Prerequisite]
-    formulae: List[ConverterFormula]
+    prerequisite: Prerequisite | None
+    formulae: list[ConverterFormula]
 
     def is_satisfied(self, gizmo: Gizmo) -> bool:
         return (
@@ -357,41 +347,41 @@ class FileGizmo(Gizmo):
         super().__init__(**basic)
 
 
-def is_upgrade_gizmo(gizmo: Gizmo) -> bool:
+def is_upgrade_gizmo(gizmo: Gizmo) -> TypeGuard[UpgradeGizmo]:
     return isinstance(gizmo, UpgradeGizmo)
 
 
-def is_converter_gizmo(gizmo: Gizmo) -> bool:
+def is_converter_gizmo(gizmo: Gizmo) -> TypeGuard[ConverterGizmo]:
     return isinstance(gizmo, ConverterGizmo)
 
 
-def is_pick_gizmo(gizmo: Gizmo) -> bool:
+def is_pick_gizmo(gizmo: Gizmo) -> TypeGuard[PickGizmo]:
     return isinstance(gizmo, PickGizmo)
 
 
-def is_build_gizmo(gizmo: Gizmo) -> bool:
+def is_build_gizmo(gizmo: Gizmo) -> TypeGuard[BuildGizmo]:
     return isinstance(gizmo, BuildGizmo)
 
 
-def is_file_gizmo(gizmo: Gizmo) -> bool:
+def is_file_gizmo(gizmo: Gizmo) -> TypeGuard[FileGizmo]:
     return isinstance(gizmo, FileGizmo)
 
 
-def is_upgrade_gizmo_info(gizmo: GizmoInfo) -> bool:
+def is_upgrade_gizmo_info(gizmo: GizmoInfo) -> TypeGuard[GizmoInfo & GizmoUpgrade]:
     return gizmo['type'] == GizmoType.UPGRADE
 
 
-def is_converter_gizmo_info(gizmo: GizmoInfo) -> bool:
+def is_converter_gizmo_info(gizmo: GizmoInfo) -> TypeGuard[GizmoInfo & GizmoConverter]:
     return gizmo['type'] == GizmoType.CONVERTER
 
 
-def is_pick_gizmo_info(gizmo: GizmoInfo) -> bool:
+def is_pick_gizmo_info(gizmo: GizmoInfo) -> TypeGuard[GizmoInfo & GizmoPick]:
     return gizmo['type'] == GizmoType.PICK
 
 
-def is_build_gizmo_info(gizmo: GizmoInfo) -> bool:
+def is_build_gizmo_info(gizmo: GizmoInfo) -> TypeGuard[GizmoInfo & GizmoBuild]:
     return gizmo['type'] == GizmoType.BUILD
 
 
-def is_file_gizmo_info(gizmo: GizmoInfo) -> bool:
+def is_file_gizmo_info(gizmo: GizmoInfo) -> TypeGuard[GizmoInfo]:
     return gizmo['type'] == GizmoType.FILE
