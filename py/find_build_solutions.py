@@ -111,6 +111,25 @@ def not_from_any_formula(formula) -> bool:
     return formula['from']['energy'] != 'any'
 
 
+def formula_options(formula: ConverterFormula) -> list[Option]:
+    options: list[Option] = []
+    if not_from_any_formula(formula):
+        options.append((formula, apply_formula))
+        if formula['to']['num'] > 1:
+            options.append((formula, apply_formula_any))
+    else:
+        for energy in ALL_ENERGY_TYPES:
+            detailed_formula = {
+                'from': {
+                    'energy': energy,
+                    'num': formula['from']['num'],
+                },
+                'to': formula['to'],
+            }
+            options.append((detailed_formula, apply_formula))
+    return options
+
+
 def find_build_solutions(
     energy_type: Energy,
     energy_cost: int,
@@ -203,33 +222,20 @@ def find_build_solutions(
 
         # try to use a gizmo
         for gizmo in ts['avail_gizmos']:
-            base_new_ts = clone_ts(ts)
-            apply_gizmo(base_new_ts, gizmo)
+            # seems clone_ts only when used is better in performance
+            # base_new_ts = clone_ts(ts)
+            # apply_gizmo(base_new_ts, gizmo)
 
             # try all possible formula combinations of the gizmo
             for formulae in proper_subsets(gizmo.formulae):
                 opt_groups: list[list[Option]] = []
                 for formula in formulae:
-                    options: list[Option] = []
-                    if not_from_any_formula(formula):
-                        options.append((formula, apply_formula))
-                        if formula['to']['num'] > 1:
-                            options.append((formula, apply_formula_any))
-                    else:
-                        for energy in ALL_ENERGY_TYPES:
-                            detailed_formula = {
-                                'from': {
-                                    'energy': energy,
-                                    'num': formula['from']['num'],
-                                },
-                                'to': formula['to'],
-                            }
-                            options.append((detailed_formula, apply_formula))
-                    opt_groups.append(options)
+                    opt_groups.append(formula_options(formula))
                 if len(opt_groups) <= 0:
                     continue
                 for strategy in list_compose(opt_groups):
-                    new_ts = clone_ts(base_new_ts)
+                    new_ts = clone_ts(ts)
+                    apply_gizmo(new_ts, gizmo)
                     if any(fn(new_ts, formula) for formula, fn in strategy):
                         tmp_solutions.put(new_ts)
 
