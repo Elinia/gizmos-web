@@ -1,4 +1,4 @@
-from typing import List, Dict, TypedDict
+from typing import Callable, List, Dict, Tuple, TypedDict
 from queue import Queue
 
 from gizmos_utils import init_energy_num
@@ -96,6 +96,10 @@ def apply_formula_any(ts: TmpBuildSolution, formula: ConverterFormula) -> bool:
         return False
     ts['extra_energy'][formula['to']['energy']] += formula['to']['num']
     return True
+
+
+Option = Tuple[ConverterFormula, Callable[[
+    TmpBuildSolution, ConverterFormula], bool]]
 
 
 def apply_gizmo(ts: TmpBuildSolution, gizmo: ConverterGizmo) -> None:
@@ -204,9 +208,9 @@ def find_build_solutions(
 
             # try all possible formula combinations of the gizmo
             for formulae in proper_subsets(gizmo.formulae):
-                opt_groups: List[List] = []
+                opt_groups: List[List[Option]] = []
                 for formula in formulae:
-                    options: List = []
+                    options: List[Option] = []
                     if not_from_any_formula(formula):
                         options.append((formula, apply_formula))
                         if formula['to']['num'] > 1:
@@ -226,7 +230,7 @@ def find_build_solutions(
                     continue
                 for strategy in list_compose(opt_groups):
                     new_ts = clone_ts(base_new_ts)
-                    if any(fn(new_ts, formula) for [formula, fn] in strategy):
+                    if any(fn(new_ts, formula) for formula, fn in strategy):
                         tmp_solutions.put(new_ts)
 
     return solutions
