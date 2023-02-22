@@ -14,7 +14,6 @@ import {
   is_build_gizmo,
   is_file_gizmo,
   GizmoInfo,
-  GizmoType,
   UpgradeGizmo,
   PickGizmo,
   BuildGizmo,
@@ -66,28 +65,11 @@ export class Player {
   energy_num: Record<Energy, number>
   filed: Set<Gizmo>
 
-  gizmos_by_type: {
-    [GizmoType.PICK]: Set<PickGizmo>
-    [GizmoType.BUILD]: Set<BuildGizmo>
-    [GizmoType.UPGRADE]: Set<UpgradeGizmo>
-    [GizmoType.CONVERTER]: Set<ConverterGizmo>
-    [GizmoType.FILE]: Set<FileGizmo>
-  }
-  get upgrade_gizmos() {
-    return this.gizmos_by_type[GizmoType.UPGRADE] as Set<UpgradeGizmo>
-  }
-  get converter_gizmos() {
-    return this.gizmos_by_type[GizmoType.CONVERTER] as Set<ConverterGizmo>
-  }
-  get pick_gizmos() {
-    return this.gizmos_by_type[GizmoType.PICK] as Set<PickGizmo>
-  }
-  get build_gizmos() {
-    return this.gizmos_by_type[GizmoType.BUILD] as Set<BuildGizmo>
-  }
-  get file_gizmos() {
-    return this.gizmos_by_type[GizmoType.FILE] as Set<FileGizmo>
-  }
+  upgrade_gizmos: Set<UpgradeGizmo>
+  converter_gizmos: Set<ConverterGizmo>
+  pick_gizmos: Set<PickGizmo>
+  build_gizmos: Set<BuildGizmo>
+  file_gizmos: Set<FileGizmo>
 
   get level3_gizmos() {
     return [...this.gizmos].filter(g => g.level === 3) as Gizmo[]
@@ -180,11 +162,11 @@ export class Player {
   add_gizmo = (gizmo: Gizmo<AllGizmoLevel>) => {
     this.gizmos.add(gizmo)
     if (is_pick_gizmo(gizmo)) {
-      this.gizmos_by_type[GizmoType.PICK].add(gizmo)
+      this.pick_gizmos.add(gizmo)
     } else if (is_build_gizmo(gizmo)) {
-      this.gizmos_by_type[GizmoType.BUILD].add(gizmo)
+      this.build_gizmos.add(gizmo)
     } else if (is_upgrade_gizmo(gizmo)) {
-      this.gizmos_by_type[GizmoType.UPGRADE].add(gizmo)
+      this.upgrade_gizmos.add(gizmo)
       this.max_energy_num += gizmo.max_energy_num
       this.max_file_num += gizmo.max_file_num
       this.research_num += gizmo.research_num
@@ -193,9 +175,9 @@ export class Player {
       this.build_from_research_cost_reduction +=
         gizmo.build_from_research_cost_reduction
     } else if (is_converter_gizmo(gizmo)) {
-      this.gizmos_by_type[GizmoType.CONVERTER].add(gizmo)
+      this.converter_gizmos.add(gizmo)
     } else if (is_file_gizmo(gizmo)) {
-      this.gizmos_by_type[GizmoType.FILE].add(gizmo)
+      this.file_gizmos.add(gizmo)
     }
   }
 
@@ -341,10 +323,10 @@ export class Player {
   constructor({
     env,
     index,
-    gizmos,
-    point_token,
-    energy_num,
-    filed,
+    gizmos = [],
+    point_token = 0,
+    energy_num = init_energy_num(),
+    filed = [],
   }: {
     env: GizmosEnv
     index: number
@@ -361,16 +343,14 @@ export class Player {
     this.build_from_filed_cost_reduction = 0
     this.build_from_research_cost_reduction = 0
     this.gizmos = new Set()
-    this.gizmos_by_type = {
-      [GizmoType.PICK]: new Set(),
-      [GizmoType.BUILD]: new Set(),
-      [GizmoType.UPGRADE]: new Set(),
-      [GizmoType.CONVERTER]: new Set(),
-      [GizmoType.FILE]: new Set(),
-    }
-    ;(gizmos ?? []).forEach(this.add_gizmo)
-    this.point_token = point_token ?? 0
-    this.energy_num = energy_num ?? init_energy_num()
+    this.upgrade_gizmos = new Set()
+    this.converter_gizmos = new Set()
+    this.pick_gizmos = new Set()
+    this.build_gizmos = new Set()
+    this.file_gizmos = new Set()
+    gizmos.forEach(this.add_gizmo)
+    this.point_token = point_token
+    this.energy_num = energy_num
     this.filed = new Set(filed)
   }
 }

@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, TypedDict
 from gizmos_utils import init_energy_num
 from common import ALL_ENERGY_TYPES, BuildMethod, Energy
 from find_build_solutions import find_build_solutions
-from Gizmo import Gizmo, GizmoInfo, is_upgrade_gizmo, is_converter_gizmo, is_pick_gizmo, is_build_gizmo, is_file_gizmo, GizmoType, Gizmo, BuildGizmo, ConverterGizmo, FileGizmo, PickGizmo, UpgradeGizmo, GizmoBuild, GizmoConverter, GizmoPick, GizmoUpgrade
+from Gizmo import Gizmo, GizmoInfo, is_upgrade_gizmo, is_converter_gizmo, is_pick_gizmo, is_build_gizmo, is_file_gizmo, Gizmo, BuildGizmo, ConverterGizmo, FileGizmo, PickGizmo, UpgradeGizmo, GizmoBuild, GizmoConverter, GizmoPick, GizmoUpgrade
 
 BASE_MAX_ENERGY = 5
 BASE_MAX_FILE = 1
@@ -15,14 +15,6 @@ if TYPE_CHECKING:
 
 def calc_total_energy_num(energy_num: dict[Energy, int]):
     return sum(energy_num.values())
-
-
-class GizmosByType(TypedDict):
-    GizmoType.UPGRADE: set[UpgradeGizmo]
-    GizmoType.CONVERTER: set[ConverterGizmo]
-    GizmoType.PICK: set[PickGizmo]
-    GizmoType.BUILD: set[BuildGizmo]
-    GizmoType.FILE: set[FileGizmo]
 
 
 class PlayerInfo(TypedDict):
@@ -62,18 +54,16 @@ class Player:
         self.build_from_filed_cost_reduction = 0
         self.build_from_research_cost_reduction = 0
         self.gizmos: set[Gizmo] = set()
-        self.gizmos_by_type: GizmosByType = {
-            GizmoType.PICK: set(),
-            GizmoType.BUILD: set(),
-            GizmoType.UPGRADE: set(),
-            GizmoType.CONVERTER: set(),
-            GizmoType.FILE: set(),
-        }
+        self.upgrade_gizmos: set[UpgradeGizmo] = set()
+        self.converter_gizmos: set[ConverterGizmo] = set()
+        self.pick_gizmos: set[PickGizmo] = set()
+        self.build_gizmos: set[BuildGizmo] = set()
+        self.file_gizmos: set[FileGizmo] = set()
         for gizmo in gizmos or []:
             self.add_gizmo(gizmo)
         self.point_token = point_token or 0
         self.energy_num = energy_num or init_energy_num()
-        self.filed = set([] if filed is None else filed)
+        self.filed = set(filed or [])
 
     def add_energy(self, energy: Energy):
         if not self.can_add_energy:
@@ -82,21 +72,21 @@ class Player:
 
     def add_gizmo(self, gizmo: Gizmo):
         self.gizmos.add(gizmo)
-        if is_pick_gizmo(gizmo):
-            self.gizmos_by_type[GizmoType.PICK].add(gizmo)
-        elif is_build_gizmo(gizmo):
-            self.gizmos_by_type[GizmoType.BUILD].add(gizmo)
-        elif is_upgrade_gizmo(gizmo):
-            self.gizmos_by_type[GizmoType.UPGRADE].add(gizmo)
+        if is_upgrade_gizmo(gizmo):
+            self.upgrade_gizmos.add(gizmo)
             self.max_energy_num += gizmo.max_energy_num
             self.max_file_num += gizmo.max_file_num
             self.research_num += gizmo.research_num
             self.build_from_filed_cost_reduction += gizmo.build_from_filed_cost_reduction
             self.build_from_research_cost_reduction += gizmo.build_from_research_cost_reduction
         elif is_converter_gizmo(gizmo):
-            self.gizmos_by_type[GizmoType.CONVERTER].add(gizmo)
+            self.converter_gizmos.add(gizmo)
+        elif is_pick_gizmo(gizmo):
+            self.pick_gizmos.add(gizmo)
+        elif is_build_gizmo(gizmo):
+            self.build_gizmos.add(gizmo)
         elif is_file_gizmo(gizmo):
-            self.gizmos_by_type[GizmoType.FILE].add(gizmo)
+            self.file_gizmos.add(gizmo)
 
     def pick_from_file(self, id: int):
         gizmo = self.env.gizmo(id)
@@ -214,26 +204,6 @@ class Player:
     @property
     def total_energy_num(self):
         return calc_total_energy_num(self.energy_num)
-
-    @property
-    def upgrade_gizmos(self) -> set[UpgradeGizmo]:
-        return self.gizmos_by_type[GizmoType.UPGRADE]
-
-    @property
-    def converter_gizmos(self) -> set[ConverterGizmo]:
-        return self.gizmos_by_type[GizmoType.CONVERTER]
-
-    @property
-    def pick_gizmos(self) -> set[PickGizmo]:
-        return self.gizmos_by_type[GizmoType.PICK]
-
-    @property
-    def build_gizmos(self) -> set[BuildGizmo]:
-        return self.gizmos_by_type[GizmoType.BUILD]
-
-    @property
-    def file_gizmos(self) -> set[FileGizmo]:
-        return self.gizmos_by_type[GizmoType.FILE]
 
     @property
     def level3_gizmos(self):
