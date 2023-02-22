@@ -78,6 +78,8 @@ class GizmoInfo(TypedDict):
     effect: Effect
     active: bool
     used: bool
+    where: Literal['excluded', 'pool', 'board', 'research', 'file', 'player']
+    belongs_to: int | None
 
 
 class Gizmo:
@@ -91,6 +93,9 @@ class Gizmo:
 
     active: bool
     used: bool
+
+    where: Literal['excluded', 'pool', 'board', 'research', 'file', 'player']
+    belongs_to: int | None
 
     def assert_available(self):
         if not self.active:
@@ -140,9 +145,14 @@ class Gizmo:
         player.env.state['free_build'] = {'level': level}
         player.env.state['curr_stage'] = Stage.EXTRA_BUILD
 
-    def reset(self):
+    def reset_used(self):
         self.active = False
         self.used = False
+
+    def reset(self):
+        self.reset_used()
+        self.where = 'excluded'
+        self.belongs_to = None
 
     def get_value(self, player: Player):
         if self.effect['type'] == 'token_as_point':
@@ -163,6 +173,8 @@ class Gizmo:
             'effect': self.effect,
             'active': self.active,
             'used': self.used,
+            'where': self.where,
+            'belongs_to': self.belongs_to,
         }
 
     def __init__(self, **basic: GizmoBasic):
@@ -175,6 +187,9 @@ class Gizmo:
 
         self.active = False
         self.used = False
+
+        self.where = 'excluded'
+        self.belongs_to = None
 
 
 class GizmoPick(TypedDict):

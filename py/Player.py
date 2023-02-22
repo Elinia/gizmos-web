@@ -72,6 +72,8 @@ class Player:
 
     def add_gizmo(self, gizmo: Gizmo):
         self.gizmos.add(gizmo)
+        gizmo.where = 'player'
+        gizmo.belongs_to = self.index
         if is_upgrade_gizmo(gizmo):
             self.upgrade_gizmos.add(gizmo)
             self.max_energy_num += gizmo.max_energy_num
@@ -104,6 +106,7 @@ class Player:
         if not self.can_file:
             raise Exception('file overflow')
         self.filed.add(gizmo)
+        gizmo.where = 'file'
         for g in self.file_gizmos:
             g.on_file()
 
@@ -155,7 +158,7 @@ class Player:
 
     def reset_gizmos(self):
         for g in self.gizmos:
-            g.reset()
+            g.reset_used()
 
     @property
     def info(self) -> PlayerInfo:

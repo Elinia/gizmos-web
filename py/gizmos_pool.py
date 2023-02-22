@@ -761,10 +761,16 @@ def init_gizmos() -> InitGizmos:
     for gizmo in gizmos:
         gizmo.reset()
     l1_s = list(l1)
-    shuffle(l1_s)
     l2_s = list(l2)
-    shuffle(l2_s)
     l3_s = list(l3)
+    for g in l1_s:
+        g.where = 'pool'
+    for g in l2_s:
+        g.where = 'pool'
+    for g in l3_s:
+        g.where = 'pool'
+    shuffle(l1_s)
+    shuffle(l2_s)
     shuffle(l3_s)
     return {
         'gizmos': gizmos,

@@ -76,6 +76,7 @@ export type Action =
   | { type: ActionType.END }
 
 export type Observation = {
+  gizmos: GizmoInfo<AllGizmoLevel>[]
   curr_turn: State['curr_turn']
   curr_stage: State['curr_stage']
   curr_player_index: State['curr_player_index']
@@ -106,6 +107,7 @@ export class GizmosEnv {
   }
 
   drop_gizmos_to_pool(level: GizmoLevel, gizmos: Gizmo[]) {
+    gizmos.forEach(g => (g.where = 'pool'))
     this.state.gizmos_pool[level] = [
       ...this.state.gizmos_pool[level],
       ...shuffle(gizmos),
@@ -117,9 +119,11 @@ export class GizmosEnv {
     if (!gizmo) {
       throw new Error('[pick_gizmo_from_board] no such gizmo')
     }
+    const new_gizmo = this.draw_gizmos_from_pool(gizmo.level, 1)
+    new_gizmo.forEach(g => (g.where = 'board'))
     this.state.gizmos_board[gizmo.level] = [
       ...this.state.gizmos_board[gizmo.level].filter(g => g.id !== id),
-      ...this.draw_gizmos_from_pool(gizmo.level, 1),
+      ...new_gizmo,
     ]
     return gizmo
   }
@@ -344,10 +348,12 @@ export class GizmosEnv {
   }
 
   research(level: GizmoLevel) {
-    this.state.researching = {
+    const gizmos = this.draw_gizmos_from_pool(
       level,
-      gizmos: this.draw_gizmos_from_pool(level, this.curr_player.research_num),
-    }
+      this.curr_player.research_num
+    )
+    gizmos.forEach(g => (g.where = 'research'))
+    this.state.researching = { level, gizmos }
     this.state.curr_stage = Stage.RESEARCH
   }
 
@@ -524,6 +530,7 @@ export class GizmosEnv {
   observation(playerIndex?: number): Observation {
     const is_curr_player = playerIndex === this.state.curr_player_index
     return {
+      gizmos: this.state.gizmos.map(g => g.info),
       curr_turn: this.state.curr_turn,
       curr_stage: this.state.curr_stage,
       curr_player_index: this.state.curr_player_index,
@@ -622,6 +629,9 @@ export class GizmosEnv {
     this.state.gizmos_board[1] = this.draw_gizmos_from_pool(1, 4)
     this.state.gizmos_board[2] = this.draw_gizmos_from_pool(2, 3)
     this.state.gizmos_board[3] = this.draw_gizmos_from_pool(3, 2)
+    this.state.gizmos_board[1].forEach(g => (g.where = 'board'))
+    this.state.gizmos_board[2].forEach(g => (g.where = 'board'))
+    this.state.gizmos_board[3].forEach(g => (g.where = 'board'))
     for (let i = 0; i < this.player_num; ++i) {
       this.state.players.push(init_player(this, i))
     }

@@ -161,6 +161,8 @@ export class Player {
 
   add_gizmo = (gizmo: Gizmo<AllGizmoLevel>) => {
     this.gizmos.add(gizmo)
+    gizmo.where = 'player'
+    gizmo.belongs_to = this.index
     if (is_pick_gizmo(gizmo)) {
       this.pick_gizmos.add(gizmo)
     } else if (is_build_gizmo(gizmo)) {
@@ -200,6 +202,7 @@ export class Player {
       throw new Error('file overflow')
     }
     this.filed.add(gizmo)
+    gizmo.where = 'file'
     this.file_gizmos.forEach(g => g.on_file())
   }
 
@@ -293,7 +296,7 @@ export class Player {
   }
 
   reset_gizmos() {
-    this.gizmos.forEach(g => g.reset())
+    this.gizmos.forEach(g => g.reset_used())
   }
 
   get info(): PlayerInfo {

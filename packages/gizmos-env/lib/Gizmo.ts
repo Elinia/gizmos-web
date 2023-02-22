@@ -43,6 +43,8 @@ export interface GizmoInfo<Level = GizmoLevel> {
   effect: Effect
   active: boolean
   used: boolean
+  where: 'excluded' | 'pool' | 'board' | 'research' | 'file' | 'player'
+  belongs_to: number | null
 }
 export abstract class Gizmo<Level = GizmoLevel> {
   abstract type: GizmoType
@@ -55,6 +57,9 @@ export abstract class Gizmo<Level = GizmoLevel> {
 
   active: boolean
   used: boolean
+
+  where: 'excluded' | 'pool' | 'board' | 'research' | 'file' | 'player'
+  belongs_to: number | null
 
   assert_available() {
     if (!this.active) {
@@ -127,9 +132,15 @@ export abstract class Gizmo<Level = GizmoLevel> {
     player.env.state.curr_stage = Stage.EXTRA_BUILD
   }
 
-  reset() {
+  reset_used() {
     this.active = false
     this.used = false
+  }
+
+  reset() {
+    this.reset_used()
+    this.where = 'excluded'
+    this.belongs_to = null
   }
 
   get_value(player: Player) {
@@ -154,6 +165,8 @@ export abstract class Gizmo<Level = GizmoLevel> {
       effect: this.effect,
       active: this.active,
       used: this.used,
+      where: this.where,
+      belongs_to: this.belongs_to,
     }
   }
 
@@ -174,6 +187,9 @@ export abstract class Gizmo<Level = GizmoLevel> {
 
     this.active = false
     this.used = false
+
+    this.where = 'excluded'
+    this.belongs_to = null
   }
 }
 

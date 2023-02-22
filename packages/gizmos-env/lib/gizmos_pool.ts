@@ -700,12 +700,18 @@ gizmos.forEach((g, i) => {
 
 export function init_gizmos() {
   gizmos.forEach(g => g.reset())
+  const l1_s = shuffle(l1)
+  const l2_s = shuffle(l2)
+  const l3_s = shuffle(l3).slice(0, 16)
+  l1_s.forEach(g => (g.where = 'pool'))
+  l2_s.forEach(g => (g.where = 'pool'))
+  l3_s.forEach(g => (g.where = 'pool'))
   return {
     gizmos,
     gizmos_pool: {
-      1: shuffle(l1),
-      2: shuffle(l2),
-      3: shuffle(l3).slice(0, 16),
+      1: l1_s,
+      2: l2_s,
+      3: l3_s,
     },
   }
 }

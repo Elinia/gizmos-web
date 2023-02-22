@@ -40,6 +40,7 @@ if TYPE_CHECKING:
         gizmos: list[GizmoInfo]
 
     class Observation(TypedDict):
+        gizmos: list[GizmoInfo]
         curr_turn: int
         curr_stage: Stage
         curr_player_index: int
@@ -210,6 +211,12 @@ class GizmosEnv(Env):
         self.state['gizmos_board'][1] = self.draw_gizmos_from_pool(1, 4)
         self.state['gizmos_board'][2] = self.draw_gizmos_from_pool(2, 3)
         self.state['gizmos_board'][3] = self.draw_gizmos_from_pool(3, 2)
+        for g in self.state['gizmos_board'][1]:
+            g.where = 'board'
+        for g in self.state['gizmos_board'][2]:
+            g.where = 'board'
+        for g in self.state['gizmos_board'][3]:
+            g.where = 'board'
         for i in range(self.player_num):
             self.state['players'].append(init_player(self, i))
 
@@ -220,6 +227,8 @@ class GizmosEnv(Env):
         return gizmos
 
     def drop_gizmos_to_pool(self, level: GizmoLevel, gizmos: list[Gizmo]):
+        for g in gizmos:
+            g.where = 'pool'
         self.state['gizmos_pool'][level] += gizmos
         shuffle(self.state['gizmos_pool'][level])
 
@@ -227,10 +236,13 @@ class GizmosEnv(Env):
         gizmo = next(g for g in self.all_board_gizmos if g.id == id)
         if not gizmo:
             raise ValueError('[pick_gizmo_from_board] no such gizmo')
+        new_gizmos = self.draw_gizmos_from_pool(gizmo.level, 1)
+        for g in new_gizmos:
+            g.where = 'board'
         self.state['gizmos_board'][gizmo.level] = [
             *filter(lambda g: g.id != id,
                     self.state['gizmos_board'][gizmo.level]),
-            *self.draw_gizmos_from_pool(gizmo.level, 1),
+            *new_gizmos,
         ]
         return gizmo
 
@@ -376,9 +388,13 @@ class GizmosEnv(Env):
         self.state['curr_stage'] = Stage.TRIGGER
 
     def research(self, level: GizmoLevel):
+        gizmos = self.draw_gizmos_from_pool(
+            level, self.curr_player.research_num)
+        for g in gizmos:
+            g.where = 'research'
         self.state['researching'] = {
             'level': level,
-            'gizmos': self.draw_gizmos_from_pool(level, self.curr_player.research_num),
+            'gizmos': gizmos,
         }
         self.state['curr_stage'] = Stage.RESEARCH
 
@@ -511,6 +527,7 @@ class GizmosEnv(Env):
     def observation(self, playerIndex: int | None = None) -> Observation:
         is_curr_player = playerIndex == self.state['curr_player_index']
         return {
+            'gizmos': [g.info for g in self.state['gizmos']],
             'curr_turn': self.state['curr_turn'],
             'curr_stage': self.state['curr_stage'],
             'curr_player_index': self.state['curr_player_index'],
