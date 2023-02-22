@@ -1,5 +1,5 @@
 from typing import Callable, TypedDict
-from queue import Queue
+from queue import SimpleQueue
 
 from gizmos_utils import init_energy_num
 from Gizmo import ConverterGizmo, ConverterFormula
@@ -137,7 +137,7 @@ def find_build_solutions(
     avail_gizmos: list[ConverterGizmo],
     check_only: bool,
 ):
-    tmp_solutions: Queue[TmpBuildSolution] = Queue()
+    tmp_solutions: SimpleQueue[TmpBuildSolution] = SimpleQueue()
     tmp_solutions.put({
         'energy_cost': energy_cost,
         'avail_energy': avail_energy.copy(),
