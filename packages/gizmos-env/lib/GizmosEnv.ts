@@ -555,18 +555,24 @@ export class GizmosEnv {
     }
   }
 
-  sim_u_gizmo = (info: GizmoInfo) => {
-    const gizmo = this.u_gizmo(info.id)
-    gizmo.used = info.used
-    gizmo.active = info.active
+  _sim_gizmo = <Level extends AllGizmoLevel>(
+    info: Partial<GizmoInfo>,
+    getter: (id: number) => Gizmo<Level>
+  ) => {
+    const gizmo = getter(info.id ?? 0)
+    gizmo.used = info.used ?? false
+    gizmo.active = info.active ?? false
+    gizmo.where = info.where ?? 'pool'
+    gizmo.belongs_to = info.belongs_to ?? null
     return gizmo
   }
 
-  sim_gizmo = (info: GizmoInfo) => {
-    const gizmo = this.gizmo(info.id)
-    gizmo.used = info.used
-    gizmo.active = info.active
-    return gizmo
+  sim_u_gizmo = (info: Partial<GizmoInfo>) => {
+    return this._sim_gizmo(info, this.u_gizmo)
+  }
+
+  sim_gizmo = (info: Partial<GizmoInfo>) => {
+    return this._sim_gizmo(info, this.gizmo)
   }
 
   simulation = (observation: Observation) => {
@@ -576,15 +582,9 @@ export class GizmosEnv {
       energy_pool: new Array(observation.energy_pool_num).fill('red'),
       gizmos,
       gizmos_pool: {
-        1: gizmos.filter(
-          g => g.level === 1 && g.where === 'pool'
-        ) as Gizmo<1>[],
-        2: gizmos.filter(
-          g => g.level === 2 && g.where === 'pool'
-        ) as Gizmo<2>[],
-        3: gizmos.filter(
-          g => g.level === 3 && g.where === 'pool'
-        ) as Gizmo<3>[],
+        1: gizmos.slice(0, observation.gizmos_pool_num[1]) as Gizmo[],
+        2: gizmos.slice(0, observation.gizmos_pool_num[2]) as Gizmo[],
+        3: gizmos.slice(0, observation.gizmos_pool_num[3]) as Gizmo[],
       },
       gizmos_board: {
         1: observation.gizmos_board[1].map(this.sim_gizmo),
