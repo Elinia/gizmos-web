@@ -424,10 +424,10 @@ class GizmosEnv(Env):
             if self.state['is_last_turn']:
                 self.state['curr_stage'] = Stage.GAME_OVER
                 return
+            self.state['curr_turn'] += 1
         self.curr_player.reset_gizmos()
         self.state['curr_player_index'] = (
             self.state['curr_player_index'] + 1) % len(self.state['players'])
-        self.state['curr_turn'] += 1
         self.state['curr_stage'] = Stage.MAIN
 
     def game_over(self):

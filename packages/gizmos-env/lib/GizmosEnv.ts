@@ -398,11 +398,11 @@ export class GizmosEnv {
         this.state.curr_stage = Stage.GAME_OVER
         return
       }
+      this.state.curr_turn += 1
     }
     this.curr_player.reset_gizmos()
     this.state.curr_player_index =
       (this.state.curr_player_index + 1) % this.state.players.length
-    this.state.curr_turn += 1
     this.state.curr_stage = Stage.MAIN
   }
 
