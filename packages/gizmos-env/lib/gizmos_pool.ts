@@ -691,7 +691,7 @@ const l0 = init_level0()
 const l1 = init_level1()
 const l2 = init_level2()
 const l3 = init_level3()
-const gizmos = [...l0, ...l1, ...l2, ...l3]
+export const gizmos = [...l0, ...l1, ...l2, ...l3]
 gizmos.forEach((g, i) => {
   if (g.id !== i) {
     throw new Error('id inconsistent')

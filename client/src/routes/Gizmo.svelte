@@ -13,11 +13,12 @@
 
   export let info: Gizmo<AllGizmoLevel>['info']
   export let simple: boolean = false
+  export let stateless: boolean = false
   $: active = info.active
   $: used = info.used
 </script>
 
-<div class="gizmo" class:simple class:active class:used>
+<div class="gizmo" class:simple class:active class:used class:stateless>
   {#if !simple}
     <div class={`text-white text-center ${info.energy_type}`}>
       <span>💰:{info.energy_cost}</span>
@@ -137,10 +138,10 @@
   .gizmo {
     @apply w-36 bg-lime-100;
   }
-  .active {
+  .active:not(.stateless) {
     @apply brightness-110;
   }
-  .used {
+  .used:not(.stateless) {
     @apply brightness-75;
   }
 </style>
