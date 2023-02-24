@@ -1,5 +1,5 @@
 from __future__ import annotations
-from enum import Enum, auto
+from enum import Enum
 from typing import Literal, TypeGuard, TypedDict, TYPE_CHECKING
 
 from common import GizmoLevel, EnergyWithAny, Energy, AllGizmoLevel, BuildMethod, Stage
@@ -8,12 +8,12 @@ if TYPE_CHECKING:
     from Player import Player
 
 
-class GizmoType(Enum):
-    PICK = auto()
-    BUILD = auto()
-    UPGRADE = auto()
-    CONVERTER = auto()
-    FILE = auto()
+class GizmoType(str, Enum):
+    PICK = 'PICK'
+    BUILD = 'BUILD'
+    UPGRADE = 'UPGRADE'
+    CONVERTER = 'CONVERTER'
+    FILE = 'FILE'
 
 
 class NaEffect(TypedDict):

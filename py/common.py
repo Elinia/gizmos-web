@@ -1,11 +1,11 @@
-from enum import Enum, auto
+from enum import Enum
 from typing import Literal
 
 
-class BuildMethod(Enum):
-    DIRECTLY = auto()
-    FROM_RESEARCH = auto()
-    FROM_FILED = auto()
+class BuildMethod(str, Enum):
+    DIRECTLY = 'DIRECTLY'
+    FROM_RESEARCH = 'FROM_RESEARCH'
+    FROM_FILED = 'FROM_FILED'
 
 
 Energy = Literal['red', 'blue', 'black', 'yellow']
@@ -24,12 +24,12 @@ GizmoLevel = Literal[1, 2, 3]
 EnergyWithAny = Literal['red', 'blue', 'black', 'yellow', 'any']
 
 
-class Stage(Enum):
-    MAIN = auto()
-    RESEARCH = auto()
-    TRIGGER = auto()
-    EXTRA_PICK = auto()
-    EXTRA_BUILD = auto()
-    EXTRA_FILE = auto()
-    EXTRA_RESEARCH = auto()
-    GAME_OVER = auto()
+class Stage(str, Enum):
+    MAIN = 'MAIN'
+    RESEARCH = 'RESEARCH'
+    TRIGGER = 'TRIGGER'
+    EXTRA_PICK = 'EXTRA_PICK'
+    EXTRA_BUILD = 'EXTRA_BUILD'
+    EXTRA_FILE = 'EXTRA_FILE'
+    EXTRA_RESEARCH = 'EXTRA_RESEARCH'
+    GAME_OVER = 'GAME_OVER'

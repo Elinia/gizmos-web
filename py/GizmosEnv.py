@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import TypedDict, TYPE_CHECKING
 from random import shuffle, choice
-from enum import Enum, auto
+from enum import Enum
 from gymnasium import Env
 
 from Player import Player, PlayerInfo
@@ -61,18 +61,18 @@ def init_player(env: GizmosEnv, index: int):
     return Player(env=env, index=index, gizmos=[env.u_gizmo(index)])
 
 
-class ActionType(Enum):
-    PICK = auto()
-    FILE = auto()
-    FILE_FROM_RESEARCH = auto()
-    BUILD = auto()
-    BUILD_FROM_RESEARCH = auto()
-    BUILD_FROM_FILED = auto()
-    BUILD_FOR_FREE = auto()
-    RESEARCH = auto()
-    USE_GIZMO = auto()
-    GIVE_UP = auto()
-    END = auto()
+class ActionType(str, Enum):
+    PICK = 'PICK'
+    FILE = 'FILE'
+    FILE_FROM_RESEARCH = 'FILE_FROM_RESEARCH'
+    BUILD = 'BUILD'
+    BUILD_FROM_RESEARCH = 'BUILD_FROM_RESEARCH'
+    BUILD_FROM_FILED = 'BUILD_FROM_FILED'
+    BUILD_FOR_FREE = 'BUILD_FOR_FREE'
+    RESEARCH = 'RESEARCH'
+    USE_GIZMO = 'USE_GIZMO'
+    GIVE_UP = 'GIVE_UP'
+    END = 'END'
 
 
 class PickAction(TypedDict):
