@@ -69,7 +69,7 @@ export type Action =
   | { type: ActionType.END }
 
 export type Observation = {
-  gizmos: GizmoInfo<AllGizmoLevel>[]
+  gizmos: GizmoInfo[]
   curr_turn: State['curr_turn']
   curr_stage: State['curr_stage']
   curr_player_index: State['curr_player_index']
@@ -555,7 +555,7 @@ export class GizmosEnv {
     }
   }
 
-  sim_u_gizmo = (info: GizmoInfo<AllGizmoLevel>) => {
+  sim_u_gizmo = (info: GizmoInfo) => {
     const gizmo = this.u_gizmo(info.id)
     gizmo.used = info.used
     gizmo.active = info.active

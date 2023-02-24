@@ -36,12 +36,12 @@ function calc_total_energy_num(energy_num: Record<Energy, number>) {
 
 export type PlayerInfo = {
   index: number
-  gizmos: GizmoInfo<AllGizmoLevel>[]
+  gizmos: GizmoInfo[]
   upgrade_gizmos: GizmoInfo[]
   converter_gizmos: GizmoInfo[]
   pick_gizmos: GizmoInfo[]
   build_gizmos: GizmoInfo[]
-  file_gizmos: GizmoInfo<AllGizmoLevel>[]
+  file_gizmos: GizmoInfo[]
   level3_gizmos: GizmoInfo[]
   filed: GizmoInfo[]
   point_token: number

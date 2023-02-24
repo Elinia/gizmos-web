@@ -69,13 +69,7 @@ class GizmoBasic(TypedDict):
 
 
 class GizmoInfo(TypedDict):
-    type: GizmoType
     id: int
-    level: AllGizmoLevel
-    energy_type: EnergyWithAny
-    energy_cost: int
-    value: int
-    effect: Effect
     active: bool
     used: bool
     where: Literal['excluded', 'pool', 'board', 'research', 'file', 'player']
@@ -164,13 +158,7 @@ class Gizmo:
     @property
     def info(self) -> GizmoInfo:
         return {
-            'type': self.type,
             'id': self.id,
-            'level': self.level,
-            'energy_type': self.energy_type,
-            'energy_cost': self.energy_cost,
-            'value': self.value,
-            'effect': self.effect,
             'active': self.active,
             'used': self.used,
             'where': self.where,
@@ -209,13 +197,6 @@ class PickGizmo(Gizmo):
         if not self.used:
             self.active = True
 
-    @property
-    def info(self) -> GizmoInfo & GizmoPick:
-        return {
-            **super().info,
-            'when_pick': self.when_pick,
-        }
-
     def __init__(self, when_pick: list[Energy], **basic: GizmoBasic):
         super().__init__(**basic)
         self.when_pick = when_pick
@@ -250,13 +231,6 @@ class BuildGizmo(Gizmo):
         if not self.used:
             self.active = True
 
-    @property
-    def info(self) -> GizmoInfo & GizmoBuild:
-        return {
-            **super().info,
-            'when_build': self.when_build,
-        }
-
     def __init__(self, when_build: WhenBuild, **basic: GizmoBasic):
         super().__init__(**basic)
         self.when_build = when_build
@@ -277,17 +251,6 @@ class UpgradeGizmo(Gizmo):
     research_num: int
     build_from_filed_cost_reduction: int
     build_from_research_cost_reduction: int
-
-    @property
-    def info(self) -> GizmoInfo & GizmoUpgrade:
-        return {
-            **super().info,
-            'max_energy_num': self.max_energy_num,
-            'max_file_num': self.max_file_num,
-            'research_num': self.research_num,
-            'build_from_filed_cost_reduction': self.build_from_filed_cost_reduction,
-            'build_from_research_cost_reduction': self.build_from_research_cost_reduction,
-        }
 
     def __init__(self, **basic: GizmoBasic & GizmoUpgrade):
         super().__init__(**basic)
@@ -333,14 +296,6 @@ class ConverterGizmo(Gizmo):
             return
         self.active = True
 
-    @property
-    def info(self) -> GizmoInfo & GizmoConverter:
-        return {
-            **super().info,
-            'prerequisite': self.prerequisite,
-            'formulae': self.formulae,
-        }
-
     def __init__(self, **basic: GizmoBasic & GizmoConverter):
         super().__init__(**basic)
         self.prerequisite = basic.get('prerequisite')
@@ -353,10 +308,6 @@ class FileGizmo(Gizmo):
     def on_file(self):
         if not self.used:
             self.active = True
-
-    @property
-    def info(self) -> GizmoInfo:
-        return super().info
 
     def __init__(self, **basic: GizmoBasic):
         super().__init__(**basic)
@@ -380,23 +331,3 @@ def is_build_gizmo(gizmo: Gizmo) -> TypeGuard[BuildGizmo]:
 
 def is_file_gizmo(gizmo: Gizmo) -> TypeGuard[FileGizmo]:
     return isinstance(gizmo, FileGizmo)
-
-
-def is_upgrade_gizmo_info(gizmo: GizmoInfo) -> TypeGuard[GizmoInfo & GizmoUpgrade]:
-    return gizmo['type'] == GizmoType.UPGRADE
-
-
-def is_converter_gizmo_info(gizmo: GizmoInfo) -> TypeGuard[GizmoInfo & GizmoConverter]:
-    return gizmo['type'] == GizmoType.CONVERTER
-
-
-def is_pick_gizmo_info(gizmo: GizmoInfo) -> TypeGuard[GizmoInfo & GizmoPick]:
-    return gizmo['type'] == GizmoType.PICK
-
-
-def is_build_gizmo_info(gizmo: GizmoInfo) -> TypeGuard[GizmoInfo & GizmoBuild]:
-    return gizmo['type'] == GizmoType.BUILD
-
-
-def is_file_gizmo_info(gizmo: GizmoInfo) -> TypeGuard[GizmoInfo]:
-    return gizmo['type'] == GizmoType.FILE

@@ -30,7 +30,7 @@ export function file_draw_level0() {
   })
 }
 
-export function init_level0() {
+export function init_level0(): Gizmo<AllGizmoLevel>[] {
   return [
     file_draw_level0(),
     file_draw_level0(),
@@ -325,7 +325,7 @@ export function upgrade_level2(energy_type: Energy) {
   })
 }
 
-export function init_level2() {
+export function init_level2(): Gizmo[] {
   return [
     converter_double_level2('red', 'black'),
     converter_double_level2('black', 'red'),
@@ -646,7 +646,7 @@ export function converter_cost_reduction_level3(energy_type: Energy) {
   })
 }
 
-export function init_level3() {
+export function init_level3(): Gizmo[] {
   return [
     upgrade_e_level3('blue'),
     upgrade_e_level3('black'),

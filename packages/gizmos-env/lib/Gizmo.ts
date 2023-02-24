@@ -33,14 +33,8 @@ export interface GizmoBasic<Level = GizmoLevel> {
   value: number
   effect?: Effect
 }
-export interface GizmoInfo<Level = GizmoLevel> {
-  type: GizmoType
+export interface GizmoInfo {
   id: number
-  level: Level
-  energy_type: EnergyWithAny
-  energy_cost: number
-  value: number
-  effect: Effect
   active: boolean
   used: boolean
   where: 'excluded' | 'pool' | 'board' | 'research' | 'file' | 'player'
@@ -154,15 +148,9 @@ export abstract class Gizmo<Level = GizmoLevel> {
     }
   }
 
-  get info(): GizmoInfo<Level> {
+  get info(): GizmoInfo {
     return {
-      type: this.type,
       id: this.id,
-      level: this.level,
-      energy_type: this.energy_type,
-      energy_cost: this.energy_cost,
-      value: this.value,
-      effect: this.effect,
       active: this.active,
       used: this.used,
       where: this.where,
@@ -210,13 +198,6 @@ export class PickGizmo extends Gizmo {
     }
     if (!this.used) {
       this.active = true
-    }
-  }
-
-  get info(): GizmoInfo & GizmoPick {
-    return {
-      ...super.info,
-      when_pick: this.when_pick,
     }
   }
 
@@ -274,13 +255,6 @@ export class BuildGizmo extends Gizmo {
     }
   }
 
-  get info(): GizmoInfo & GizmoBuild {
-    return {
-      ...super.info,
-      when_build: this.when_build,
-    }
-  }
-
   constructor({ when_build, ...basic }: GizmoBasic & GizmoBuild) {
     super(basic)
     this.when_build = when_build
@@ -301,18 +275,6 @@ export class UpgradeGizmo extends Gizmo {
   research_num: number
   build_from_filed_cost_reduction: number
   build_from_research_cost_reduction: number
-
-  get info(): GizmoInfo & Required<GizmoUpgrade> {
-    return {
-      ...super.info,
-      max_energy_num: this.max_energy_num,
-      max_file_num: this.max_file_num,
-      research_num: this.research_num,
-      build_from_filed_cost_reduction: this.build_from_filed_cost_reduction,
-      build_from_research_cost_reduction:
-        this.build_from_research_cost_reduction,
-    }
-  }
 
   constructor({
     max_energy_num,
@@ -365,14 +327,6 @@ export class ConverterGizmo extends Gizmo {
     this.active = true
   }
 
-  get info(): GizmoInfo & GizmoConverter {
-    return {
-      ...super.info,
-      prerequisite: this.prerequisite,
-      formulae: this.formulae,
-    }
-  }
-
   constructor({
     prerequisite,
     formulae,
@@ -394,11 +348,6 @@ export class FileGizmo<Level = GizmoLevel> extends Gizmo<Level> {
       this.active = true
     }
   }
-
-  get info(): GizmoInfo<Level> & GizmoFile {
-    return super.info
-  }
-
   constructor({ ...basic }: GizmoBasic<Level> & GizmoFile) {
     super(basic)
   }
@@ -424,30 +373,4 @@ export function is_build_gizmo(
 }
 export function is_file_gizmo(gizmo: Gizmo<AllGizmoLevel>): gizmo is FileGizmo {
   return gizmo instanceof FileGizmo
-}
-
-export function is_upgrade_gizmo_info(
-  gizmo: Gizmo<AllGizmoLevel>['info']
-): gizmo is UpgradeGizmo['info'] {
-  return gizmo.type === GizmoType.UPGRADE
-}
-export function is_converter_gizmo_info(
-  gizmo: Gizmo<AllGizmoLevel>['info']
-): gizmo is ConverterGizmo['info'] {
-  return gizmo.type === GizmoType.CONVERTER
-}
-export function is_pick_gizmo_info(
-  gizmo: Gizmo<AllGizmoLevel>['info']
-): gizmo is PickGizmo['info'] {
-  return gizmo.type === GizmoType.PICK
-}
-export function is_build_gizmo_info(
-  gizmo: Gizmo<AllGizmoLevel>['info']
-): gizmo is BuildGizmo['info'] {
-  return gizmo.type === GizmoType.BUILD
-}
-export function is_file_gizmo_info(
-  gizmo: Gizmo<AllGizmoLevel>['info']
-): gizmo is FileGizmo['info'] {
-  return gizmo.type === GizmoType.FILE
 }
