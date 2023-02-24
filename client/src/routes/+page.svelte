@@ -9,6 +9,7 @@
   import type { BuildSolution, PlayerInfo } from 'gizmos-env/Player'
   import { random_int } from 'gizmos-env/utils'
   import Gizmo from './Gizmo.svelte'
+  import Energy from './Energy.svelte'
   import { render_level } from '$lib/helpers.js'
   import { GizmosClient } from '$lib/client.js'
 
@@ -151,12 +152,7 @@
     <div class="flex gap-2">
       <div class="energy">
         Energy ({$me.total_energy_num}/{$me.max_energy_num}):
-        {#each ALL_ENERGY_TYPES as energy}
-          {@const num = $me.energy_num[energy]}
-          {#each new Array(num).fill(energy) as e}
-            <div class={`w-5 h-5 rounded-full ${e}`} />
-          {/each}
-        {/each}
+        <Energy energy_num={$me.energy_num} />
       </div>
     </div>
     <div>
@@ -300,12 +296,7 @@
       <div>Estimated score: {player.score}</div>
       <div class="energy">
         <div>Energy:</div>
-        {#each ALL_ENERGY_TYPES as energy}
-          {@const num = player.energy_num[energy]}
-          {#each new Array(num).fill(energy) as e}
-            <div class={`w-5 h-5 rounded-full ${e}`} />
-          {/each}
-        {/each}
+        <Energy energy_num={player.energy_num} />
       </div>
       <div>
         Gizmos ({player.gizmos.length}/{$env.max_gizmos_num} Level3 {player
