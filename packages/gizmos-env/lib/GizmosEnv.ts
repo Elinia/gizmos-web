@@ -7,12 +7,7 @@ import {
   type AllGizmoLevel,
 } from './common'
 import { init_energy_pool } from './energy_pool'
-import {
-  init_gizmos,
-  init_level1,
-  init_level2,
-  init_level3,
-} from './gizmos_pool'
+import { init_gizmos } from './gizmos_pool'
 import type { Gizmo, GizmoInfo } from './Gizmo'
 import { Player, type PlayerInfo } from './Player'
 import { sample, shuffle } from './utils'
@@ -578,9 +573,19 @@ export class GizmosEnv {
     const gizmos = this.state.gizmos
     this.state = {
       ...observation,
-      energy_pool: ['red', 'blue', 'yellow', 'black'],
+      energy_pool: new Array(observation.energy_pool_num).fill('red'),
       gizmos,
-      gizmos_pool: { 1: init_level1(), 2: init_level2(), 3: init_level3() },
+      gizmos_pool: {
+        1: gizmos.filter(
+          g => g.level === 1 && g.where === 'pool'
+        ) as Gizmo<1>[],
+        2: gizmos.filter(
+          g => g.level === 2 && g.where === 'pool'
+        ) as Gizmo<2>[],
+        3: gizmos.filter(
+          g => g.level === 3 && g.where === 'pool'
+        ) as Gizmo<3>[],
+      },
       gizmos_board: {
         1: observation.gizmos_board[1].map(this.sim_gizmo),
         2: observation.gizmos_board[2].map(this.sim_gizmo),
