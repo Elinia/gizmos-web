@@ -36,7 +36,7 @@ export class GizmosClient {
     player_list => player_list.find(p => p.me)?.index
   )
 
-  log = writable<string[]>([])
+  log = writable<(string | { name: string; action: Action })[]>([])
 
   login = (name: string) => {
     // FIXME: not robust to get name here
@@ -176,7 +176,15 @@ export class GizmosClient {
       this.room_info.set(room_info)
     })
     this.socket.on('observation', (observation: Observation) => {
-      this.observation.set(observation)
+      this.observation.update(prev => {
+        if (!prev || observation.curr_turn > prev.curr_turn) {
+          this.log.update(log => {
+            log.push(`-----Turn ${observation.curr_turn}-----`)
+            return log
+          })
+        }
+        return observation
+      })
       const new_env = new GizmosEnv({
         player_num: get(this.player_list).length,
       })
@@ -202,7 +210,7 @@ export class GizmosClient {
       'action',
       ({ name, action }: { name: string; action: Action }) => {
         this.log.update(log => {
-          log.push(`${name}: ${JSON.stringify(action)}`)
+          log.push({ name, action })
           return log
         })
       }

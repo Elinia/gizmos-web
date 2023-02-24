@@ -10,6 +10,7 @@
   import { random_int } from 'gizmos-env/utils'
   import Gizmo from './Gizmo.svelte'
   import Energy from './Energy.svelte'
+  import Log from './Log.svelte'
   import { render_level } from '$lib/helpers.js'
   import { GizmosClient } from '$lib/client.js'
 
@@ -389,11 +390,7 @@
     </dialog>
   </div>
 {/if}
-<div class="log">
-  {#each $log as msg}
-    <div>{msg}</div>
-  {/each}
-</div>
+<Log log={$log} />
 
 <style lang="postcss">
   .status-red {

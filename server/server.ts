@@ -130,8 +130,8 @@ io.of('/player').on('connection', socket => {
     const env = getEnv()
     console.log(`[action]: ${playersSocketID.indexOf(socket.id)}`, action)
     env.step(playersSocketID.indexOf(socket.id), action)
-    broadcastObservation()
     broadcastAction(socket, action)
+    broadcastObservation()
     if (env.state.curr_stage === Stage.GAME_OVER) {
       endGame()
     }
