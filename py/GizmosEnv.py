@@ -70,7 +70,6 @@ class ActionType(Enum):
     BUILD_FROM_FILED = auto()
     BUILD_FOR_FREE = auto()
     RESEARCH = auto()
-    CHOOSE_TRIGGER = auto()
     USE_GIZMO = auto()
     GIVE_UP = auto()
     END = auto()
@@ -128,11 +127,6 @@ class ResearchAction(TypedDict):
     id: GizmoLevel
 
 
-class ChooseTriggerAction(TypedDict):
-    type: ActionType.CHOOSE_TRIGGER
-    gizmos: list[int]
-
-
 class UseGizmoAction(TypedDict):
     type: ActionType.USE_GIZMO
     id: int
@@ -146,7 +140,7 @@ class EndAction(TypedDict):
     type: ActionType.END
 
 
-Action = PickAction | FileAction | FileFromResearchAction | BuildAction | BuildFromFileAction | BuildFromResearchAction | BuildForFreeAction | ResearchAction | ChooseTriggerAction | UseGizmoAction | GiveUpAction | EndAction
+Action = PickAction | FileAction | FileFromResearchAction | BuildAction | BuildFromFileAction | BuildFromResearchAction | BuildForFreeAction | ResearchAction | UseGizmoAction | GiveUpAction | EndAction
 
 
 class GizmosEnv(Env):
@@ -714,8 +708,10 @@ class GizmosEnv(Env):
             *self.space_research(),
             *self.space_use_gizmo(),
             *self.space_give_up(),
-            *self.space_end(),
+            # *self.space_end(),
         ]
 
     def sample(self):
+        if self.log and len(self.action_space) <= 0:
+            print('[sample] no choice')
         return choice(self.action_space)

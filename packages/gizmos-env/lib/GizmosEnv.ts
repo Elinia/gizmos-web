@@ -51,7 +51,6 @@ export enum ActionType {
   BUILD_FROM_FILED = 'BUILD_FROM_FILED',
   BUILD_FOR_FREE = 'BUILD_FOR_FREE',
   RESEARCH = 'RESEARCH',
-  CHOOSE_TRIGGER = 'CHOOSE_TRIGGER',
   USE_GIZMO = 'USE_GIZMO',
   GIVE_UP = 'GIVE_UP',
   END = 'END',
@@ -70,7 +69,6 @@ export type Action =
   | ({ type: ActionType.BUILD_FROM_RESEARCH } & ActionBuildSolution)
   | { type: ActionType.BUILD_FOR_FREE; id: number }
   | { type: ActionType.RESEARCH; level: GizmoLevel }
-  | { type: ActionType.CHOOSE_TRIGGER; gizmos: number[] }
   | { type: ActionType.USE_GIZMO; id: number }
   | { type: ActionType.GIVE_UP }
   | { type: ActionType.END }
