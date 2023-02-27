@@ -79,7 +79,9 @@
 
   let research_dialog_element: HTMLDialogElement
   $: if (research_dialog_element && $observation?.researching) {
-    research_dialog_element.showModal()
+    if (!research_dialog_element.open) {
+      research_dialog_element.showModal()
+    }
   }
   $: if (research_dialog_element && !$observation?.researching) {
     research_dialog_element.close()
@@ -137,6 +139,7 @@
                   method: BuildMethod.FROM_FILED,
                   solutions,
                 }
+                if (build_dialog_element.open) return
                 build_dialog_element.showModal()
               }}
             >
@@ -227,6 +230,7 @@
                     method: BuildMethod.DIRECTLY,
                     solutions,
                   }
+                  if (build_dialog_element.open) return
                   build_dialog_element.showModal()
                 }}
               >
