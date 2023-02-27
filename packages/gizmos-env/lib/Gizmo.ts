@@ -92,9 +92,7 @@ export abstract class Gizmo<Level = GizmoLevel> {
   }
 
   free_draw(player: Player, num: number) {
-    if (player.env.energy_pool_len() <= 0) {
-      return
-    }
+    if (player.env.energy_pool_len() <= 0) return
     const draw_num = Math.min(
       num,
       player.max_energy_num - player.total_energy_num
@@ -103,9 +101,7 @@ export abstract class Gizmo<Level = GizmoLevel> {
   }
 
   free_pick(player: Player, num: number) {
-    if (player.env.state.energy_board.length <= 0) {
-      return
-    }
+    if (player.env.state.energy_board.length <= 0) return
     player.env.state.free_pick_num = num
   }
 
@@ -118,6 +114,7 @@ export abstract class Gizmo<Level = GizmoLevel> {
   }
 
   extra_research(player: Player) {
+    if (player.research_num <= 0) return
     player.env.state.curr_stage = Stage.EXTRA_RESEARCH
   }
 

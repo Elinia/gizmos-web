@@ -133,6 +133,8 @@ class Gizmo:
         player.env.state['curr_stage'] = Stage.EXTRA_FILE
 
     def extra_research(self, player: Player):
+        if player.research_num <= 0:
+            return
         player.env.state['curr_stage'] = Stage.EXTRA_RESEARCH
 
     def extra_build(self, player: Player, level: list[GizmoLevel]):
