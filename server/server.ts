@@ -53,14 +53,13 @@ function broadcastRoom() {
 
 function startGame() {
   globalEnv = new GizmosEnv({ player_num: playersInfo.size })
-  globalEnv.reset()
   playersSocketID = shuffle(Array.from(playersInfo).map(([id]) => id))
   Array.from(playersInfo).forEach(([id]) => {
     const info = getPlayerInfo(id)
     const playerList = playersSocketID.map((_id, i) => {
-      const info = getPlayerInfo(_id)
+      const { name } = getPlayerInfo(_id)
       return {
-        name: info.name,
+        name,
         index: i,
         me: _id === id,
       }
@@ -128,8 +127,9 @@ io.of('/player').on('connection', socket => {
 
   socket.on('action', (action: Action) => {
     const env = getEnv()
-    console.log(`[action]: ${playersSocketID.indexOf(socket.id)}`, action)
-    env.step(playersSocketID.indexOf(socket.id), action)
+    const playerIndex = playersSocketID.indexOf(socket.id)
+    console.log(`[action] ${playerIndex}`, action)
+    env.step(playerIndex, action)
     broadcastAction(socket, action)
     broadcastObservation()
     if (env.state.curr_stage === Stage.GAME_OVER) {
@@ -138,8 +138,8 @@ io.of('/player').on('connection', socket => {
   })
 
   socket.on('observation', () => {
-    const i = playersSocketID.indexOf(socket.id)
     const env = getEnv()
-    socket.emit('observation', env.observation(i))
+    const playerIndex = playersSocketID.indexOf(socket.id)
+    socket.emit('observation', env.observation(playerIndex))
   })
 })
