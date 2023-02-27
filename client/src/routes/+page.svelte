@@ -71,23 +71,21 @@
     <li />
   </ul>
 {/if}
-{#if $game_ongoing}
-  <Game
-    ongoing={$game_ongoing}
-    {game}
-    {pending}
-    {pick}
-    {file}
-    {file_from_research}
-    {build}
-    {build_from_filed}
-    {build_from_research}
-    {research}
-    {use_gizmo}
-    {give_up}
-    {end}
-  />
-{/if}
+<Game
+  ongoing={$game_ongoing}
+  {game}
+  {pending}
+  {pick}
+  {file}
+  {file_from_research}
+  {build}
+  {build_from_filed}
+  {build_from_research}
+  {research}
+  {use_gizmo}
+  {give_up}
+  {end}
+/>
 
 <style lang="postcss">
   .status-red {

@@ -16,7 +16,6 @@
 
   const noop = () => undefined
 
-  export let replay = false
   export let ongoing: boolean = true
   export let game: GizmosGame
   export let pending: Readable<boolean> = readable(false)
@@ -32,16 +31,6 @@
   export let end: GizmosClient['end'] = noop
 
   const { log, player_list, me, env, observation, is_avail } = game
-
-  $: if (replay && $observation) {
-    player_list.set(
-      $observation.players.map((_, i) => ({
-        name: `Player${i}`,
-        index: i,
-        me: $observation?.curr_player_index === i,
-      }))
-    )
-  }
 
   $: console.log($observation)
   $: console.log($env, $env?.action_space)
