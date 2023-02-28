@@ -1,6 +1,6 @@
 from random import shuffle
 
-from common import Energy
+from .common import Energy
 
 ENERGY_POOL: list[Energy] = ['red']*13 + \
     ['yellow']*13 + ['blue']*13 + ['black']*13

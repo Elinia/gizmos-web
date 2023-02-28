@@ -2,8 +2,9 @@ from typing import Literal, TypedDict
 import socketio
 from aiohttp import web
 
-from GizmosEnv import GizmosEnv, Action
-from common import Stage
+from env.types import Action
+from env.common import Stage
+from env.GizmosEnv import GizmosEnv
 
 sio = socketio.AsyncServer(async_mode='aiohttp', cors_allowed_origins='*')
 app = web.Application()

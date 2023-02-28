@@ -1,146 +1,18 @@
 from __future__ import annotations
-from typing import TypedDict, TYPE_CHECKING
 from random import shuffle, choice
-from enum import Enum
 from gymnasium import Env
 
-from Player import Player, PlayerInfo
-from gizmos_pool import init_gizmos
-from energy_pool import init_energy_pool
-from common import ALL_ENERGY_TYPES, BuildMethod, Stage, Energy, GizmoLevel
-from utils import find_index
-
-if TYPE_CHECKING:
-    from Gizmo import Gizmo, GizmoInfo
-
-    class Researching(TypedDict):
-        level: GizmoLevel
-        gizmos: list[Gizmo]
-
-    class FreeBuild(TypedDict):
-        level: list[GizmoLevel]
-
-    class State(TypedDict):
-        curr_turn: int
-        curr_stage: Stage
-        curr_player_index: int
-        is_last_turn: bool
-        energy_pool: list[Energy]
-        energy_board: list[Energy]
-        gizmos: list[Gizmo]
-        gizmos_pool: dict[GizmoLevel, list[Gizmo]]
-        gizmos_board: dict[GizmoLevel, list[Gizmo]]
-        players: list[Player]
-        researching: None | Researching
-        free_build: None | FreeBuild
-        free_pick_num: int
-
-    class ResearchingInfo(TypedDict):
-        level: GizmoLevel
-        gizmos: list[GizmoInfo]
-
-    class Observation(TypedDict):
-        gizmos: list[GizmoInfo]
-        curr_turn: int
-        curr_stage: Stage
-        curr_player_index: int
-        is_last_turn: bool
-        energy_pool_num: int
-        energy_board: list[Energy]
-        gizmos_pool_num: dict[GizmoLevel, int]
-        gizmos_board: dict[GizmoLevel, list[GizmoInfo]]
-        researching: ResearchingInfo
-        players: list[PlayerInfo]
-        free_build: State.free_build
-        free_pick_num: State.free_pick_num
-        truncated: bool
-        action_space: list[Action]
+from .Gizmo import Gizmo
+from .types import Action, ActionType, Observation, State, PickAction, FileAction, FileFromResearchAction, ActionBuildSolution, BuildAction, BuildFromFileAction, BuildFromResearchAction, BuildForFreeAction, ResearchAction, UseGizmoAction, GiveUpAction, EndAction
+from .Player import Player
+from .gizmos_pool import init_gizmos
+from .energy_pool import init_energy_pool
+from .common import ALL_ENERGY_TYPES, BuildMethod, Stage, Energy, GizmoLevel
+from .utils import find_index
 
 
 def init_player(env: GizmosEnv, index: int):
     return Player(env=env, index=index, gizmos=[env.u_gizmo(index)])
-
-
-class ActionType(str, Enum):
-    PICK = 'PICK'
-    FILE = 'FILE'
-    FILE_FROM_RESEARCH = 'FILE_FROM_RESEARCH'
-    BUILD = 'BUILD'
-    BUILD_FROM_RESEARCH = 'BUILD_FROM_RESEARCH'
-    BUILD_FROM_FILED = 'BUILD_FROM_FILED'
-    BUILD_FOR_FREE = 'BUILD_FOR_FREE'
-    RESEARCH = 'RESEARCH'
-    USE_GIZMO = 'USE_GIZMO'
-    GIVE_UP = 'GIVE_UP'
-    END = 'END'
-
-
-class PickAction(TypedDict):
-    type: ActionType.PICK
-    energy: Energy
-
-
-class FileAction(TypedDict):
-    type: ActionType.FILE
-    id: int
-
-
-class FileFromResearchAction(TypedDict):
-    type: ActionType.FILE_FROM_RESEARCH
-    id: int
-
-
-class ActionBuildSolution(TypedDict):
-    id: int
-    cost_energy_num: dict[Energy, int]
-    cost_converter_gizmos_id: list[int]
-
-
-class BuildAction(TypedDict):
-    type: ActionType.BUILD
-    id: int
-    cost_energy_num: dict[Energy, int]
-    cost_converter_gizmos_id: list[int]
-
-
-class BuildFromFileAction(TypedDict):
-    type: ActionType.BUILD_FROM_FILED
-    id: int
-    cost_energy_num: dict[Energy, int]
-    cost_converter_gizmos_id: list[int]
-
-
-class BuildFromResearchAction(TypedDict):
-    type: ActionType.BUILD_FROM_RESEARCH
-    id: int
-    cost_energy_num: dict[Energy, int]
-    cost_converter_gizmos_id: list[int]
-
-
-class BuildForFreeAction(TypedDict):
-    type: ActionType.BUILD_FOR_FREE
-    id: int
-
-
-class ResearchAction(TypedDict):
-    type: ActionType.RESEARCH
-    id: GizmoLevel
-
-
-class UseGizmoAction(TypedDict):
-    type: ActionType.USE_GIZMO
-    id: int
-
-
-class GiveUpAction(TypedDict):
-    type: ActionType.GIVE_UP
-
-
-class EndAction(TypedDict):
-    type: ActionType.END
-
-
-Action = PickAction | FileAction | FileFromResearchAction | BuildAction | BuildFromFileAction | BuildFromResearchAction | BuildForFreeAction | ResearchAction | UseGizmoAction | GiveUpAction | EndAction
 
 
 class GizmosEnv(Env):

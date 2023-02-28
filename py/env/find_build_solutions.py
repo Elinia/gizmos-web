@@ -1,10 +1,10 @@
 from typing import Callable, TypedDict
 from queue import SimpleQueue
 
-from gizmos_utils import init_energy_num
-from Gizmo import ConverterGizmo, ConverterFormula
-from common import Energy, EnergyWithAny
-from utils import proper_subsets, list_compose
+from .gizmos_utils import init_energy_num
+from .Gizmo import ConverterGizmo, ConverterFormula
+from .common import Energy, EnergyWithAny
+from .utils import proper_subsets, list_compose
 
 ALL_ENERGY_TYPES = ['red', 'blue', 'black', 'yellow']
 

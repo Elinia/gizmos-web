@@ -1,16 +1,17 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, TypedDict
-from gizmos_utils import init_energy_num
-from common import ALL_ENERGY_TYPES, BuildMethod, Energy
-from find_build_solutions import find_build_solutions
-from Gizmo import Gizmo, GizmoInfo, is_upgrade_gizmo, is_converter_gizmo, is_pick_gizmo, is_build_gizmo, is_file_gizmo, Gizmo, BuildGizmo, ConverterGizmo, FileGizmo, PickGizmo, UpgradeGizmo, GizmoBuild, GizmoConverter, GizmoPick, GizmoUpgrade
+
+from .gizmos_utils import init_energy_num
+from .common import ALL_ENERGY_TYPES, BuildMethod, Energy
+from .find_build_solutions import find_build_solutions
+from .Gizmo import Gizmo, GizmoInfo, is_upgrade_gizmo, is_converter_gizmo, is_pick_gizmo, is_build_gizmo, is_file_gizmo, Gizmo, BuildGizmo, ConverterGizmo, FileGizmo, PickGizmo, UpgradeGizmo, GizmoBuild, GizmoConverter, GizmoPick, GizmoUpgrade
 
 BASE_MAX_ENERGY = 5
 BASE_MAX_FILE = 1
 BASE_RESEARCH_NUM = 3
 
 if TYPE_CHECKING:
-    from GizmosEnv import GizmosEnv
+    from .GizmosEnv import GizmosEnv
 
 
 def calc_total_energy_num(energy_num: dict[Energy, int]):

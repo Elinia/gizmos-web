@@ -2,10 +2,10 @@ from __future__ import annotations
 from enum import Enum
 from typing import Literal, TypeGuard, TypedDict, TYPE_CHECKING
 
-from common import GizmoLevel, EnergyWithAny, Energy, AllGizmoLevel, BuildMethod, Stage
+from .common import GizmoLevel, EnergyWithAny, Energy, AllGizmoLevel, BuildMethod, Stage
 
 if TYPE_CHECKING:
-    from Player import Player
+    from .Player import Player
 
 
 class GizmoType(str, Enum):

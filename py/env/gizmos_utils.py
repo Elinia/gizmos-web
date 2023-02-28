@@ -1,4 +1,4 @@
-from common import Energy
+from .common import Energy
 
 
 def init_energy_num(energy_num: dict[Energy, int | None] | None = None) -> dict[Energy, int]:

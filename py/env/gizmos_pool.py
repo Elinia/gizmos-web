@@ -1,8 +1,8 @@
 from random import shuffle
 from typing import Literal, TypedDict
 
-from common import BuildMethod, Energy, GizmoLevel
-from Gizmo import Gizmo, BuildGizmo, ConverterGizmo, FileGizmo, PickGizmo, UpgradeGizmo
+from .common import BuildMethod, Energy, GizmoLevel
+from .Gizmo import Gizmo, BuildGizmo, ConverterGizmo, FileGizmo, PickGizmo, UpgradeGizmo
 
 
 id: int = -1
