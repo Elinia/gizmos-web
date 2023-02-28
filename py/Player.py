@@ -19,7 +19,7 @@ def calc_total_energy_num(energy_num: dict[Energy, int]):
 
 class PlayerInfo(TypedDict):
     index: int
-    gizmos: list[Gizmo]
+    gizmos: list[GizmoInfo]
     upgrade_gizmos: list[GizmoInfo & GizmoUpgrade]
     converter_gizmos: list[GizmoInfo & GizmoConverter]
     pick_gizmos: list[GizmoInfo & GizmoPick]
