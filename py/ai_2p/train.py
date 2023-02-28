@@ -1,3 +1,4 @@
+import json
 import torch
 import copy
 import random
@@ -8,7 +9,7 @@ if True:
     sys.path.append(os.path.realpath('..'))
     from ai_2p.IDGenerator import IDGenerator
     from ai_2p.Critic import Critic
-    from env.types import ActionType
+    from env.types import ActionType, Observation, Action
     from env.common import Stage
     from env.GizmosEnv import GizmosEnv
 
@@ -24,6 +25,22 @@ optimizers = [torch.optim.SGD(critic.parameters(), lr=0.01)
 # optimizers = torch.optim.Adam(critic.parameters(), lr=0.01)
 # optimizers = torch.optim.RMSprop(critic.parameters())
 
+best_turn: int = 25
+
+
+def log_replay(replay: list[Observation | Action],
+               observation: Observation | None = None,
+               action: Action | None = None):
+    if observation == None:
+        if action == None:
+            return
+        replay.append(copy.deepcopy(action))
+    else:
+        ob = copy.deepcopy(observation)
+        del ob['gizmos']
+        replay.append(ob)
+
+
 for i in range(1000000):
     env.reset()
     last_score = 0
@@ -32,9 +49,11 @@ for i in range(1000000):
     output = [[], []]
     action = [[], []]
     traj = []
+    replay: list[Observation | Action] = []
     while True:
         np = env.state['curr_player_index']
         ob = env.observation(np)
+        log_replay(replay, observation=ob)
         action_space = ob['action_space']
         if ob['curr_stage'] == Stage.GAME_OVER or ob['curr_turn'] > 70:
             break
@@ -71,6 +90,7 @@ for i in range(1000000):
         input[np].append(list(map(int, feature)))
         output[np].append(0)
         env.step(np, act)
+        log_replay(replay, action=act)
 
     ob = env.observation(0)
     p0 = ob['players'][0]
@@ -113,3 +133,9 @@ for i in range(1000000):
     if i % 100 == 0:
         for np in range(2):
             critics[np].save('cri-{}p.pkl'.format(np + 1))
+
+    if ob['curr_turn'] < best_turn:
+        best_turn = ob['curr_turn']
+        json_replay = json.dumps(replay)
+        with open('pro_play.json', 'w+') as f:
+            f.write(json_replay)
