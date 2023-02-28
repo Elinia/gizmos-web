@@ -1,9 +1,8 @@
-import json
 from typing import TypedDict
 import socketio
 
 from env.common import Stage
-from env.types import Observation, Action, ActionType
+from env.types import Observation, Action
 from ai_2p.Critic import Critic
 from ai_2p.IDGenerator import IDGenerator
 
