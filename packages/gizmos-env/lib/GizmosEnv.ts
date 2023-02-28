@@ -83,6 +83,7 @@ export type Observation = {
   free_build: State['free_build']
   free_pick_num: State['free_pick_num']
   truncated: boolean
+  action_space: Action[]
 }
 
 export class GizmosEnv {
@@ -508,11 +509,11 @@ export class GizmosEnv {
     console.timeEnd('step')
   }
 
-  u_gizmo(id: number) {
+  u_gizmo = (id: number) => {
     return this.state.gizmos[id]
   }
 
-  gizmo(id: number) {
+  gizmo = (id: number) => {
     const gizmo = this.u_gizmo(id)
     if (gizmo.level === 0) {
       throw new Error('unexpected gizmo')
@@ -552,6 +553,7 @@ export class GizmosEnv {
       free_build: this.state.free_build,
       free_pick_num: this.state.free_pick_num,
       truncated: this.truncated,
+      action_space: this.action_space,
     }
   }
 
