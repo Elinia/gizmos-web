@@ -708,7 +708,7 @@ class GizmosEnv(Env):
             *self.space_research(),
             *self.space_use_gizmo(),
             *self.space_give_up(),
-            # *self.space_end(),
+            *self.space_end(),
         ]
 
     def sample(self):
