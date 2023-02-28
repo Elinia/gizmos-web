@@ -259,7 +259,7 @@ def converter_any_level2(energy_type: Energy, from_energy: Energy):
     )
 
 
-def build_pick_level2(energy_type: Energy, build_energy: Energy):
+def build_pick_level2(energy_type: Energy, build_energy: list[Energy]):
     global id
     id += 1
     return BuildGizmo(
@@ -268,7 +268,7 @@ def build_pick_level2(energy_type: Energy, build_energy: Energy):
         energy_type=energy_type,
         when_build={
             **BUILD_COMMON,
-            'energy': [build_energy],
+            'energy': build_energy,
         },
         effect={
             'type': 'free_pick',
@@ -277,7 +277,7 @@ def build_pick_level2(energy_type: Energy, build_energy: Energy):
     )
 
 
-def build_point_level2(energy_type: Energy, build_energy: Energy):
+def build_point_level2(energy_type: Energy, build_energy: list[Energy]):
     global id
     id += 1
     return BuildGizmo(
@@ -286,30 +286,12 @@ def build_point_level2(energy_type: Energy, build_energy: Energy):
         energy_type=energy_type,
         when_build={
             **BUILD_COMMON,
-            'energy': [build_energy],
+            'energy': build_energy,
         },
         effect={
             'type': 'add_point_token',
             'num': 1,
         },
-    )
-
-
-def build_point_level2(energy_type: Energy, build_energy: Energy):
-    global id
-    id += 1
-    return BuildGizmo(
-        id=id,
-        **level2_common(3),
-        energy_type=energy_type,
-        when_build=dict(
-            **BUILD_COMMON,
-            energy=build_energy,
-        ),
-        effect=dict(
-            type='add_point_token',
-            num=1,
-        ),
     )
 
 
