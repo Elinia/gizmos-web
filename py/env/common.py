@@ -7,6 +7,9 @@ class BuildMethod(str, Enum):
     FROM_RESEARCH = 'FROM_RESEARCH'
     FROM_FILED = 'FROM_FILED'
 
+    def __str__(self) -> str:
+        return self.value
+
 
 Energy = Literal['red', 'blue', 'black', 'yellow']
 
@@ -33,3 +36,6 @@ class Stage(str, Enum):
     EXTRA_FILE = 'EXTRA_FILE'
     EXTRA_RESEARCH = 'EXTRA_RESEARCH'
     GAME_OVER = 'GAME_OVER'
+
+    def __str__(self) -> str:
+        return self.value

@@ -15,6 +15,9 @@ class GizmoType(str, Enum):
     CONVERTER = 'CONVERTER'
     FILE = 'FILE'
 
+    def __str__(self) -> str:
+        return self.value
+
 
 class NaEffect(TypedDict):
     type: Literal['na']

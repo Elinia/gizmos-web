@@ -7,7 +7,7 @@ if True:
     import sys
     import os
     sys.path.append(os.path.realpath('..'))
-    from env.types import ActionType, Observation
+    from env.types import ActionType, Observation, Action
 
 
 class Critic(torch.nn.Module):
@@ -147,7 +147,7 @@ class Critic(torch.nn.Module):
             self.idg.gen_unique_id('ball', rival['energy_num']['yellow'])
         ]
 
-    def add_action_feature(self, feature: list[int], j):
+    def add_action_feature(self, feature: list[int], j: Action):
         feature.append(self.idg.gen_unique_id("actiontype", str(j['type'])))
         if j['type'] == ActionType.RESEARCH:
             feature.append(self.idg.gen_unique_id("level", str(j['level'])))

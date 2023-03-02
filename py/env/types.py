@@ -49,6 +49,9 @@ class ActionType(str, Enum):
     GIVE_UP = 'GIVE_UP'
     END = 'END'
 
+    def __str__(self) -> str:
+        return self.value
+
 
 class PickAction(TypedDict):
     type: ActionType.PICK
