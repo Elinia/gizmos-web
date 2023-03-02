@@ -132,7 +132,7 @@ async def action(sid: str, action: Action):
 async def observation(sid: str):
     env = get_env()
     player_index = players_sid.index(sid)
-    await sio.emit('observation', env.observation(player_index), namespace='/player')
+    await sio.emit('observation', env.observation(player_index), room=sid, namespace='/player')
 
 
 if __name__ == '__main__':
