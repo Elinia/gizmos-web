@@ -2,7 +2,7 @@ from typing import TypedDict
 import socketio
 
 from env.common import Stage
-from env.types import Observation, Action
+from env.types import Observation, Action, ActionType
 from ai_2p.Critic import Critic
 from ai_2p.IDGenerator import IDGenerator
 
@@ -57,9 +57,13 @@ def disconnect():
 
 @sio.event(namespace='/player')
 def observation(ob: Observation):
+    print('[observation] turn: {} stage: {} player index: {}'.format(
+        ob['curr_turn'], ob['curr_stage'], ob['curr_player_index']))
     global index
     if ob['curr_stage'] == Stage.GAME_OVER or ob['curr_player_index'] != index:
         return
+    ob['action_space'] = [action for action in ob['action_space']
+                          if action['type'] != ActionType.END]
     action = critics[index].best_action(ob)
     step(action)
 
