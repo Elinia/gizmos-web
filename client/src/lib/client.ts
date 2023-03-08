@@ -152,7 +152,6 @@ export class GizmosClient {
     this.socket.on('start', (player_list: PlayerList) => {
       this.game_ongoing.set(true)
       this.game.player_list.set(player_list)
-      this.socket.emit('observation')
     })
     this.socket.on('end', () => {
       this.game_ongoing.set(false)

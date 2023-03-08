@@ -72,7 +72,6 @@ def observation(ob: Observation):
 def start(player_list: list[Player]):
     global index
     index = [player['index'] for player in player_list if player['me']][0]
-    sio.emit('observation', namespace='/player')
 
 
 @sio.event(namespace='/player')
