@@ -683,7 +683,7 @@ export class GizmosEnv {
     if (!this.curr_player.can_add_energy) {
       return []
     }
-    return this.state.energy_board.map(energy => ({
+    return [...new Set(this.state.energy_board)].map(energy => ({
       type: ActionType.PICK,
       energy,
     }))

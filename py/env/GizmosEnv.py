@@ -452,7 +452,7 @@ class GizmosEnv(Env):
         return [{
             'type': ActionType.PICK,
             'energy': energy,
-        } for energy in self.state['energy_board']]
+        } for energy in list(set(self.state['energy_board']))]
 
     def space_file(self) -> list[FileAction]:
         if self.state['curr_stage'] not in [Stage.MAIN, Stage.EXTRA_FILE]:
