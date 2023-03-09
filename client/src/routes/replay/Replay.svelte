@@ -1,20 +1,21 @@
 <script lang="ts">
-  import type { Action, Observation } from 'gizmos-env/GizmosEnv'
+  import type { Observation } from 'gizmos-env/GizmosEnv'
   import { GizmosGame } from '$lib/game.js'
+  import type { ActionLog, Replay } from '$lib/types.js'
   import Game from '../Game.svelte'
 
-  export let replay: (Observation | { name: string; action: Action })[]
+  export let replay: Replay
 
   const game = new GizmosGame()
   let step = 0
 
   const { observation, on_observation, on_action, log, player_list } = game
 
-  function is_action(r: any): r is Action {
-    return 'type' in r
+  function is_action(r: any): r is ActionLog {
+    return 'action' in r
   }
 
-  function is_observation(r: any): r is Observation {
+  function is_observation(r: any): r is Omit<Observation, 'gizmos'> {
     return 'curr_stage' in r
   }
 
@@ -26,10 +27,7 @@
       if (is_action(r)) {
         // action
         if (!$observation) return
-        on_action({
-          name: `${$observation.curr_player_index}`,
-          action: r,
-        })
+        on_action(r)
       } else if (is_observation(r)) {
         // observation
         player_list.set(

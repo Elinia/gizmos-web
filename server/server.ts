@@ -1,8 +1,13 @@
 import { Server, Socket } from 'socket.io'
 import { Stage } from 'gizmos-env/common'
-import { GizmosEnv, type Action } from 'gizmos-env/GizmosEnv'
+import { GizmosEnv, Observation, type Action } from 'gizmos-env/GizmosEnv'
 import { shuffle } from 'gizmos-env/utils'
 import { PORT } from './config.js'
+
+function clone<T extends object>(obj: T): T {
+  // return structuredClone(obj)
+  return JSON.parse(JSON.stringify(obj))
+}
 
 const io = new Server(PORT, {
   cors: {
@@ -16,6 +21,8 @@ const playersInfo = new Map<
 >()
 let playersSocketID: Socket['id'][] = []
 let globalEnv: GizmosEnv | null = null
+let replay: (Omit<Observation, 'gizmos'> | { name: string; action: Action })[] =
+  []
 
 function getPlayerInfo(id: Socket['id']) {
   const info = playersInfo.get(id)
@@ -35,13 +42,19 @@ function getEnv() {
 function broadcastAction(socket: Socket, action: Action) {
   const info = getPlayerInfo(socket.id)
   io.of('/player').emit('action', { name: info.name, action })
+  replay.push({ name: info.name, action })
 }
 
 function broadcastObservation() {
   const env = getEnv()
   playersSocketID.forEach((id, i) => {
     const info = getPlayerInfo(id)
-    info.socket.emit('observation', env.observation(i))
+    const observation = env.observation(i)
+    info.socket.emit('observation', observation)
+    if (i === observation.curr_player_index) {
+      const { gizmos, ...rob } = observation
+      replay.push(clone(rob))
+    }
   })
 }
 
@@ -52,6 +65,7 @@ function broadcastRoom() {
 }
 
 function startGame() {
+  replay = []
   globalEnv = new GizmosEnv({ player_num: playersInfo.size })
   playersSocketID = shuffle(Array.from(playersInfo).map(([id]) => id))
   Array.from(playersInfo).forEach(([id]) => {
@@ -76,6 +90,8 @@ function endGame() {
     const info = getPlayerInfo(id)
     playersInfo.set(id, { ...info, ready: false })
   })
+  io.of('/player').emit('replay', replay)
+  replay = []
   io.of('/player').emit('end')
   broadcastRoom()
 }

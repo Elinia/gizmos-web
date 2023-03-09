@@ -1,18 +1,8 @@
 import { Stage } from 'gizmos-env/common'
-import {
-  ActionType,
-  GizmosEnv,
-  type Action,
-  type Observation,
-} from 'gizmos-env/GizmosEnv'
+import { ActionType, GizmosEnv, type Observation } from 'gizmos-env/GizmosEnv'
 import type { PlayerInfo } from 'gizmos-env/Player'
 import { derived, get, writable } from 'svelte/store'
-
-export type PlayerList = {
-  name: string
-  index: number
-  me: boolean
-}[]
+import type { ActionLog, PlayerList } from './types.js'
 
 export class GizmosGame {
   player_list = writable<PlayerList>([])
@@ -21,9 +11,9 @@ export class GizmosGame {
     player_list => player_list.find(p => p.me)?.index
   )
 
-  log = writable<(string | { name: string; action: Action })[]>([])
+  log = writable<(string | ActionLog)[]>([])
 
-  observation = writable<Observation | null>(null)
+  observation = writable<Omit<Observation, 'gizmos'> | null>(null)
   env = writable<GizmosEnv | null>(null)
 
   me = derived(
@@ -48,7 +38,7 @@ export class GizmosGame {
     return is_avail_map
   })
 
-  on_observation = (observation: Observation) => {
+  on_observation = (observation: Omit<Observation, 'gizmos'>) => {
     this.observation.update(prev => {
       if (!prev || observation.curr_turn > prev.curr_turn) {
         this.log.update(log => {
@@ -64,7 +54,6 @@ export class GizmosGame {
     })
     new_env.simulation(observation)
     this.env.set(new_env)
-    // this.pending.set(false)
     if (observation.curr_stage === Stage.GAME_OVER) {
       if (observation.truncated) {
         alert('internal error')
@@ -81,7 +70,7 @@ export class GizmosGame {
     }
   }
 
-  on_action = ({ name, action }: { name: string; action: Action }) => {
+  on_action = ({ name, action }: ActionLog) => {
     this.log.update(log => {
       log.push({ name, action })
       return log

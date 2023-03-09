@@ -4,12 +4,7 @@ import { ActionType, type Action, type Observation } from 'gizmos-env/GizmosEnv'
 import { derived, get, writable } from 'svelte/store'
 import { connect_socket_as_player } from './helpers.js'
 import { GizmosGame } from './game.js'
-
-type PlayerList = {
-  name: string
-  index: number
-  me: boolean
-}[]
+import type { ActionLog, PlayerList, Replay } from './types.js'
 
 type RoomInfo = { name: string; ready: boolean }[]
 
@@ -24,6 +19,7 @@ export class GizmosClient {
     return $room_info.some(({ name }) => name === $name)
   })
   game_ongoing = writable(false)
+  replay = writable<Replay | null>(null)
 
   game = new GizmosGame()
 
@@ -143,12 +139,9 @@ export class GizmosClient {
       this.game.on_observation(observation)
       this.pending.set(false)
     })
-    this.socket.on(
-      'action',
-      ({ name, action }: { name: string; action: Action }) => {
-        this.game.on_action({ name, action })
-      }
-    )
+    this.socket.on('action', ({ name, action }: ActionLog) => {
+      this.game.on_action({ name, action })
+    })
     this.socket.on('start', (player_list: PlayerList) => {
       this.game_ongoing.set(true)
       this.game.player_list.set(player_list)
@@ -157,6 +150,9 @@ export class GizmosClient {
       this.game_ongoing.set(false)
       this.game.observation.set(null)
       this.game.env.set(null)
+    })
+    this.socket.on('replay', replay => {
+      this.replay.set(replay)
     })
     this.socket.on('error', msg => alert(msg))
     this.socket.on('connect', () => {

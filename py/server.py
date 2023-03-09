@@ -1,8 +1,9 @@
+import copy
 from typing import Literal, TypedDict
 import socketio
 from aiohttp import web
 
-from env.types import Action
+from env.types import Action, Observation
 from env.common import Stage
 from env.GizmosEnv import GizmosEnv
 
@@ -16,9 +17,15 @@ class PlayerInfo(TypedDict):
     ready: bool
 
 
+class ActionLog(TypedDict):
+    name: str
+    action: Action
+
+
 players_info: dict[str, PlayerInfo] = {}
 players_sid: list[str] = []
 global_env: GizmosEnv | None = None
+replay: list[Observation | ActionLog] = []
 
 
 def get_player_info(sid: str):
@@ -38,13 +45,18 @@ async def broadcast_action(sid: str, action: Action):
     info = get_player_info(sid)
     await sio.emit('action', {'name': info['name'],
                               'action': action}, namespace='/player')
+    replay.append({'name': info['name'], 'action': action})
 
 
 async def broadcast_observation():
     env = get_env()
     for i, sid in enumerate(players_sid):
-        await sio.emit('observation', env.observation(
-            i), room=sid, namespace='/player')
+        observation = env.observation(i)
+        await sio.emit('observation', observation, room=sid, namespace='/player')
+        if i == observation['curr_player_index']:
+            clone = copy.deepcopy(observation)
+            clone.pop('gizmos')
+            replay.append(clone)
 
 
 async def broadcast_room():
@@ -55,7 +67,9 @@ async def broadcast_room():
 
 
 async def start_game():
-    global global_env, players_sid
+    print('[start_game]')
+    global global_env, players_sid, replay
+    replay = []
     global_env = GizmosEnv(player_num=len(players_info))
     players_sid = [sid for sid in players_info.keys()]
     for sid in players_info.keys():
@@ -73,6 +87,7 @@ async def end_game():
     players_sid = []
     for info in players_info.values():
         info['ready'] = False
+    await sio.emit('replay', replay, namespace='/player')
     await sio.emit('end', namespace='/player')
     await broadcast_room()
 
@@ -80,6 +95,7 @@ async def end_game():
 @sio.event(namespace='/player')
 async def connect(sid: str, environ, auth):
     print('[connect] {}'.format(sid))
+    await broadcast_room()
 
 
 @sio.event(namespace='/player')

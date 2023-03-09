@@ -25,6 +25,7 @@
     give_up,
     end,
     sample,
+    replay,
   } = client
 
   const { player_index, env, observation } = game
@@ -86,6 +87,13 @@
   {give_up}
   {end}
 />
+{#if $replay}
+  {@const blob = new Blob([JSON.stringify($replay, null, 2)], {
+    type: 'application/json ',
+  })}
+  {@const url = URL.createObjectURL(blob)}
+  <a href={url} download="replay.json">replay</a>
+{/if}
 
 <style lang="postcss">
   .status-red {

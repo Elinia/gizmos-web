@@ -1,7 +1,7 @@
 <script lang="ts">
-  import type { Observation, Action } from 'gizmos-env/GizmosEnv'
+  import type { Replay as ReplayData } from '$lib/types.js'
   import Replay from './Replay.svelte'
-  let replay: (Observation | { name: string; action: Action })[] = []
+  let replay: ReplayData = []
 </script>
 
 <div>

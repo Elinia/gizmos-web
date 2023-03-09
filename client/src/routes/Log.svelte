@@ -1,11 +1,12 @@
 <script lang="ts">
   import { render_level } from '$lib/helpers.js'
-  import { ActionType, type Action } from 'gizmos-env/GizmosEnv'
+  import type { ActionLog } from '$lib/types.js'
+  import { ActionType } from 'gizmos-env/GizmosEnv'
   import { gizmos } from 'gizmos-env/gizmos_pool'
   import Energy from './Energy.svelte'
   import Gizmo from './Gizmo.svelte'
 
-  export let log: (string | { name: string; action: Action })[]
+  export let log: (string | ActionLog)[]
 </script>
 
 <div class="log">

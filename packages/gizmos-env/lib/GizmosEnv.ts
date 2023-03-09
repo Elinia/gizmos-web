@@ -577,7 +577,7 @@ export class GizmosEnv {
     return this._sim_gizmo(info, this.gizmo)
   }
 
-  simulation = (observation: Observation) => {
+  simulation = (observation: Omit<Observation, 'gizmos'>) => {
     const gizmos = this.state.gizmos
     this.state = {
       ...observation,
