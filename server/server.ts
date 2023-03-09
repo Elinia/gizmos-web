@@ -101,6 +101,7 @@ io.of('/player').on('connection', socket => {
     console.log(`[disconnect] ${socket.id}`)
     if (playersInfo.has(socket.id)) {
       playersInfo.delete(socket.id)
+      broadcastRoom()
     }
     // reconnect mechanism?
     if (globalEnv) {

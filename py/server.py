@@ -87,6 +87,7 @@ async def disconnect(sid: str):
     print('[disconnect] {}'.format(sid))
     if sid in players_info:
         players_info.pop(sid)
+        await broadcast_room()
     # reconnect mechanism?
     if global_env is not None:
         await end_game()
