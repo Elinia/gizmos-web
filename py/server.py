@@ -79,6 +79,7 @@ async def start_game():
             'me':_sid == sid
         } for i, _sid in enumerate(players_sid)]
         await sio.emit('start', player_list, room=sid, namespace='/player')
+    await broadcast_observation()
 
 
 async def end_game():
