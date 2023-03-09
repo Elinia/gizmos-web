@@ -57,7 +57,13 @@ def is_ppo(model: PPOModel | QLearner) -> TypeGuard[PPOModel]:
     return model.model_name == 'PPO'
 
 
-for i in range(1000000):
+try:
+    f = open('PPO-step.log', 'r')
+    start_step = int(f.read()) + 1
+except FileNotFoundError:
+    start_step = 0
+
+for i in range(start_step, 1000000):
     env.reset()
     last_score = 0
     ret = 0
