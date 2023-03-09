@@ -2,3 +2,5 @@ gymnasium
 python-socketio
 aiohttp
 python-socketio[client]
+
+torch

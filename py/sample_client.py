@@ -3,12 +3,12 @@ import socketio
 
 from env.common import Stage
 from env.types import Observation, Action, ActionType
-from ai_2p.Critic import Critic
-from ai_2p.IDGenerator import IDGenerator
+from ai_2p.IDGen import IDGen
+from ai_2p.PPOModel import PPOModel
 
-idg = IDGenerator(path='ai_2p/d.json')
-critics = [Critic(64 + 4, idg=idg, path='ai_2p/cri-1p.pkl'),
-           Critic(64 + 4, idg=idg, path='ai_2p/cri-2p.pkl')]
+idg = IDGen(path='ai_2p/d.json')
+models = [PPOModel(idg, path='ai_2p/PPO-1p40000.pkl'),
+          PPOModel(idg, path='ai_2p/PPO-2p40000.pkl')]
 
 
 class Player(TypedDict):
@@ -57,14 +57,17 @@ def disconnect():
 
 @sio.event(namespace='/player')
 def observation(ob: Observation):
-    print('[observation] turn: {} stage: {} player index: {}'.format(
-        ob['curr_turn'], ob['curr_stage'], ob['curr_player_index']))
+    print('[observation] turn: {} stage: {} player index: {} score: {}'.format(
+        ob['curr_turn'],
+        ob['curr_stage'],
+        ob['curr_player_index'],
+        ob['players'][ob['curr_player_index']]['score']))
     global index
     if ob['curr_stage'] == Stage.GAME_OVER or ob['curr_player_index'] != index:
         return
     ob['action_space'] = [action for action in ob['action_space']
                           if action['type'] != ActionType.END]
-    action = critics[index].best_action(ob)
+    action = models[index].best_action(ob)
     step(action)
 
 

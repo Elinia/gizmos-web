@@ -7,69 +7,57 @@ if True:
     import sys
     import os
     sys.path.append(os.path.realpath('..'))
-    from ai_2p.IDGenerator import IDGenerator
-    from ai_2p.Critic import Critic
-    from env.types import ActionType, Observation, Action
+    from ai_2p.utils import Replay, log_replay
+    from ai_2p.IDGen import IDGen
+    from ai_2p.QLearner import QLearner
+    from env.types import ActionType
     from env.common import Stage
     from env.GizmosEnv import GizmosEnv
 
 
 env = GizmosEnv(player_num=2, log=False, check=False)
-debug_round = 1000
 
-idg = IDGenerator(path='d.json')
-critics = [Critic(64 + 4, idg, path='cri-1p.pkl'),
-           Critic(64 + 4, idg, path='cri-2p.pkl')]
-optimizers = [torch.optim.SGD(critic.parameters(), lr=0.01)
-              for critic in critics]
-# optimizers = torch.optim.Adam(critic.parameters(), lr=0.01)
-# optimizers = torch.optim.RMSprop(critic.parameters())
+idg = IDGen(path='d.json')
+models = [QLearner(idg, path='q_1p.pkl'),
+          QLearner(idg, path='q_2p.pkl')]
 
 best_turn: int = 25
+best_avg_score: int = 2
 
 
-def log_replay(replay: list[Observation | Action],
-               observation: Observation | None = None,
-               action: Action | None = None):
-    if observation == None:
-        if action == None:
-            return
-        replay.append(copy.deepcopy(action))
-    else:
-        ob = copy.deepcopy(observation)
-        del ob['gizmos']
-        replay.append(ob)
+log_file = open('q.log', 'a+')
 
+try:
+    f = open('q_step.log', 'r')
+    start_step = int(f.read()) + 1
+except FileNotFoundError:
+    start_step = 0
 
-for i in range(1000000):
+for i in range(start_step, 1000000):
     env.reset()
-    last_score = 0
-    ret = 0
     input = [[], []]
     output = [[], []]
-    action = [[], []]
     traj = []
-    replay: list[Observation | Action] = []
+    replay: Replay = []
     while True:
         np = env.state['curr_player_index']
+        model = models[np]
         ob = env.observation(np)
         log_replay(replay, observation=ob)
         action_space = ob['action_space']
         if ob['curr_stage'] == Stage.GAME_OVER or ob['curr_turn'] > 70:
             break
         act = None
-        feature = critics[0].get_context_feature(ob)
+        feature = model.fg.gen_context_feature(ob)
         ti = []
         end_act = None
-        for j in action_space:
-            if j['type'] == ActionType.END:
-                end_act = j
+        for action in action_space:
+            if action['type'] == ActionType.END:
+                end_act = action
                 continue
-            critics[0].add_action_feature(feature, j)
-            ti.append(copy.copy(feature))
-            feature = feature[:-4]
-        tmp = torch.Tensor(ti)
-        yhat = critics[np].forward(torch.Tensor(ti)).view(-1,)
+            act_feature = model.fg.gen_action_feature(action)
+            ti.append(copy.copy(feature + act_feature))
+        yhat = model.model.forward(torch.Tensor(ti)).view(-1,)
 
         def sample_gumbel(shape, eps=1e-20):
             U = torch.rand(shape)
@@ -83,14 +71,14 @@ for i in range(1000000):
             act = end_act
         else:
             act = action_space[torch.argmax(best_action)]
-        critics[0].add_action_feature(feature, act)
 
         traj.append(str(act))
-        # feature.append(self.idg.gen_unique_id("action", str(act)))
-        input[np].append(list(map(int, feature)))
+        act_feature = model.fg.gen_action_feature(act)
+        input[np].append(list(map(int, feature + act_feature)))
         output[np].append(0)
         env.step(np, act)
-        log_replay(replay, action=act)
+        log_replay(replay, action={
+                   'name': model.model_name + str(np), 'action': act})
 
     ob = env.observation(0)
     p0 = ob['players'][0]
@@ -113,29 +101,45 @@ for i in range(1000000):
             output[np][last] = v
             last -= 1
     for np in range(2):
+        model = models[np]
         input[np] = input[np][:-1]
         output[np] = output[np][1:]
-        yhat = critics[np].forward(torch.Tensor(input[np]))
-        loss = torch.mean(critics[np].loss(torch.Tensor(output[np]), yhat))
-        optimizers[np].zero_grad()
+        yhat = model.model.forward(torch.Tensor(input[np]))
+        loss = torch.mean(model.model.loss(torch.Tensor(output[np]), yhat))
+        model.optimizer.zero_grad()
         loss.backward()
-        optimizers[np].step()
+        model.optimizer.step()
 
     if i == 0:
         continue
-    if i % debug_round == 0:
+    if i % 100 == 0:
         print(traj)
         print("step", i)
     if i % 10 == 0:
-        print("Games played:", i, "; token seen:", idg.cnt, "; loss:", float(loss), "; end turn", ob[
-              'curr_turn'], "; final score",  p0['score'],  p1['score'])
+        raw_log = "Games played:", i, "; token seen:", idg.cnt, "; loss:", float(loss), "; end turn", ob[
+            'curr_turn'], "; final score",  p0['score'],  p1['score']
+        train_log = ' '.join(map(lambda x: str(x), raw_log))
+        print(train_log)
+        log_file.write(train_log + '\n')
 
     if i % 100 == 0:
         for np in range(2):
-            critics[np].save('cri-{}p.pkl'.format(np + 1))
+            models[np].save('q_{}p.pkl'.format(np + 1))
+        with open('q_step.log', 'w+') as f:
+            f.write(str(i))
+
+    if i % 10000 == 0:
+        for np in range(2):
+            models[np].save('q_{}p{}.pkl'.format(np + 1, i))
 
     if ob['curr_turn'] < best_turn:
         best_turn = ob['curr_turn']
         json_replay = json.dumps(replay)
-        with open('pro_play.json', 'w+') as f:
+        with open('q_pro_play.json', 'w+') as f:
+            f.write(json_replay)
+
+    if ob['curr_turn'] == best_turn and (p0['score'] + p1['score']) / ob['curr_turn'] > best_avg_score:
+        best_avg_score = (p0['score'] + p1['score']) / ob['curr_turn']
+        json_replay = json.dumps(replay)
+        with open('q_pro_play.json', 'w+') as f:
             f.write(json_replay)
