@@ -33,6 +33,7 @@ idg = IDGen(path='d.json')
 models = [PPOModel(idg, path='ppo-1p.pkl'), PPOModel(idg, path='ppo-2p.pkl')]
 
 best_turn: int = 25
+best_avg_score: float = 0.0
 
 
 log_file = open('PPO.log', 'a+')
