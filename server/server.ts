@@ -98,6 +98,7 @@ function endGame() {
 
 io.of('/player').on('connection', socket => {
   console.log(`[connect] ${socket.id}`)
+  broadcastRoom()
 
   socket.on('login', ({ name }: { name: string }) => {
     console.log(`[login] ${socket.id} ${name}`)
