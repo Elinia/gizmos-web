@@ -18,7 +18,7 @@ if True:
     from ai_2p.IDGen import IDGen
     from ai_2p.PPOModel import PPOModel
     from ai_2p.QLearner import QLearner
-    from env.types import ActionType, Observation, Action
+    from env.types import ActionType
     from env.common import Stage
     from env.GizmosEnv import GizmosEnv
 

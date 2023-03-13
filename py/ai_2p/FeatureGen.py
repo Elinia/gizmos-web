@@ -13,10 +13,10 @@ class FeatureGen(object):
     action_space_len = 29
     len = observation_space_len + action_space_len
 
-    def __init__(self, idg: IDGen | None = IDGen()):
+    def __init__(self, idg: IDGen | None):
         self.d: dict[any, int] = {}
         self.cnt = 0
-        self.idg = idg
+        self.idg = idg or IDGen()
 
     def gen_context_feature(self, ob: Observation):
         gen = self.idg.gen_unique_id

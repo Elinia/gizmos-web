@@ -1,5 +1,4 @@
 import copy
-from typing import Optional
 import torch
 
 from .IDGen import IDGen
@@ -50,8 +49,8 @@ class Net(torch.nn.Module):
 class QLearner:
     model_name = "PPO"
 
-    def __init__(self, idg: Optional[IDGen] = IDGen(), path='q.pkl'):
-        self.idg = idg
+    def __init__(self, idg: IDGen | None, path='q.pkl'):
+        self.idg = idg or IDGen()
         self.fg = FeatureGen(self.idg)
 
         self.model = Net(self.fg.len)

@@ -1,5 +1,4 @@
 import copy
-from typing import Optional
 import torch
 
 from .IDGen import IDGen
@@ -81,7 +80,7 @@ class Net(torch.nn.Module):
 class PPOModel(torch.nn.Module):
     model_name = "PPO"
 
-    def __init__(self, idg: Optional[IDGen] = IDGen(), path='ppo.pkl'):
+    def __init__(self, idg=IDGen(), path='ppo.pkl'):
         super(PPOModel, self).__init__()
         self.idg = idg
         self.fg = FeatureGen(self.idg)
