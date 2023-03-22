@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 
-f = open("PPO.log")
+f = open("SARSA.log")
 
 cnt = 0
 x = []
@@ -12,8 +12,8 @@ for l in f.readlines():
         x = x[-1:]
         y[0] = []
         y[1] = []
-    y[0].append(int(a[-1].strip().split(' ')[-2]))
-    y[1].append(int(a[-1].strip().split(' ')[-1]))
+    y[0].append(int(a[-2].strip().split(' ')[-2]))
+    y[1].append(int(a[-2].strip().split(' ')[-1]))
 # plt.plot(x, y, lw=1)
 
 
