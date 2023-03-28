@@ -865,7 +865,12 @@ export class GizmosEnv {
     max_level3_gizmos_num = 4,
     check = true,
   }) {
-    if (player_num < 1 || max_gizmos_num < 2 || max_level3_gizmos_num < 1) {
+    if (
+      player_num < 1 ||
+      player_num > 4 ||
+      max_gizmos_num < 2 ||
+      max_level3_gizmos_num < 1
+    ) {
       throw new Error('unsupported configuration')
     }
     this.check = check

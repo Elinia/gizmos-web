@@ -17,7 +17,7 @@ def init_player(env: GizmosEnv, index: int):
 
 class GizmosEnv(Env):
     def __init__(self, player_num=2, max_gizmos_num=16, max_level3_gizmos_num=4, check=True, log=True):
-        if player_num < 1 or max_gizmos_num < 2 or max_level3_gizmos_num < 1:
+        if player_num < 1 or player_num > 4 or max_gizmos_num < 2 or max_level3_gizmos_num < 1:
             raise ValueError('unsupported configuration')
         self.check = check
         self.log = log
