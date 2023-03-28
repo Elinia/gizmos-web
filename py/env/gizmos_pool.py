@@ -411,7 +411,7 @@ def upgrade_forbid_file_level3(energy_type: Energy):
         energy_cost=4,
         value=7,
         energy_type=energy_type,
-        max_file_num=-float('inf'),
+        max_file_num=-200,
     )
 
 
@@ -424,7 +424,7 @@ def upgrade_forbid_research_level3(energy_type: Energy):
         energy_cost=4,
         value=8,
         energy_type=energy_type,
-        research_num=-float('inf'),
+        research_num=-200,
     )
 
 
