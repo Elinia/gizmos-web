@@ -1,3 +1,6 @@
 {
-  "cSpell.words": ["lget", "traj", "yhat"]
+  "cSpell.words": ["lget", "SARSA", "traj", "yhat"],
+  "[python]": {
+    "editor.tabSize": 4
+  }
 }
