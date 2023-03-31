@@ -66,7 +66,7 @@ try:
 except FileNotFoundError:
     start_step = 0
 
-for i in range(start_step, 1000000):
+for i in range(start_step, 10000000):
     env.reset()
     last_score = 0
     ret = 0

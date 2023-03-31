@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 
-f = open("SARSA.log")
+f = open("SARSA-v3.log")
 
 cnt = 0
 x = []
@@ -37,7 +37,6 @@ def smooth(a):
 
 y[0] = smooth(y[0])
 y[1] = smooth(y[1])
-print(x)
 plt.plot(x[:], y[0][:], lw=1)
 plt.plot(x[:], y[1][:], lw=1)
 

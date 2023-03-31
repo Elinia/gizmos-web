@@ -310,18 +310,6 @@ class GizmosEnv(Env):
                 print(player.score)
         return
 
-    # def get_reward(self, playerIndex):
-    #     if self.state['curr_stage'] != Stage.GAME_OVER:
-    #         return 0
-    #     if self.truncated:
-    #         return float('-inf')
-    #     score = self.state['players'][playerIndex].score
-    #     rank = len(
-    #         list(filter(lambda player: player.score > score, self.state['players']))) + 1
-    #     winner_reward = ((1 + self.player_num) * self.player_num) / 2
-    #     loser_reward = 1 - rank
-    #     return winner_reward if rank == 1 else loser_reward
-
     def step(self, playerIndex: int, action: Action):
         if self.log:
             print('[step]', playerIndex, action)
