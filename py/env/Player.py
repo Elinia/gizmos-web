@@ -108,6 +108,7 @@ class Player:
             raise Exception('file overflow')
         self.filed.add(gizmo)
         gizmo.where = 'file'
+        gizmo.belongs_to = self.index
         for g in self.file_gizmos:
             g.on_file()
 

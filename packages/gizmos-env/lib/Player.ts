@@ -203,6 +203,7 @@ export class Player {
     }
     this.filed.add(gizmo)
     gizmo.where = 'file'
+    gizmo.belongs_to = this.index
     this.file_gizmos.forEach(g => g.on_file())
   }
 
