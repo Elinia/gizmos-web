@@ -277,13 +277,11 @@
               <button class="avail" on:click={() => on_build($me, solution)}>
                 Solution {i}:
                 <div class="energy">
-                  Used energy:
-                  {#each ALL_ENERGY_TYPES as energy}
-                    <span>{energy}: {solution.energy_num[energy]}</span>
-                  {/each}
+                  Energy cost:
+                  <Energy energy_num={solution.energy_num} />
                 </div>
                 <div class="gizmos-simple">
-                  Used gizmos:
+                  Gizmos cost:
                   {#each solution.gizmos as gizmo}
                     <Gizmo info={gizmo} simple={true} />
                   {/each}
