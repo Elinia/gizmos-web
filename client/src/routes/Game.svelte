@@ -1,10 +1,6 @@
 <script lang="ts">
   import { readable, type Readable } from 'svelte/store'
-  import {
-    ALL_ENERGY_TYPES,
-    BuildMethod,
-    type GizmoLevel,
-  } from 'gizmos-env/common'
+  import { BuildMethod, type GizmoLevel } from 'gizmos-env/common'
   import { ActionType } from 'gizmos-env/GizmosEnv'
   import type { BuildSolution, PlayerInfo } from 'gizmos-env/Player'
   import Gizmo from './Gizmo.svelte'
@@ -280,17 +276,28 @@
                   Energy cost:
                   <Energy energy_num={solution.energy_num} />
                 </div>
-                <div class="gizmos-simple">
-                  Gizmos cost:
-                  {#each solution.gizmos as gizmo}
-                    <Gizmo info={gizmo} simple={true} />
-                  {/each}
-                </div>
+                {#if solution.gizmos.length > 0}
+                  <div class="gizmos-simple">
+                    Gizmos cost:
+                    {#each solution.gizmos as gizmo}
+                      <Gizmo info={gizmo} simple={true} />
+                    {/each}
+                  </div>
+                {/if}
               </button>
             {/each}
           </div>
         {/if}
-        <button value="cancel">Cancel</button>
+        <button
+          value="cancel"
+          on:click={() => {
+            if ($observation?.researching) {
+              research_dialog_element.showModal()
+            }
+          }}
+        >
+          Cancel
+        </button>
       </form>
     </dialog>
     <dialog bind:this={research_dialog_element}>
