@@ -162,7 +162,7 @@ class GizmosEnv(Env):
         actions: set[Action] = set()
         if self.state['curr_stage'] == Stage.MAIN:
             actions.add(ActionType.END)
-            if len(self.state['energy_board']) > 0:
+            if len(self.state['energy_board']) > 0 and self.curr_player.can_add_energy:
                 actions.add(ActionType.PICK)
             if len(self.buildable_gizmos(self.all_board_gizmos, BuildMethod.DIRECTLY)) > 0:
                 actions.add(ActionType.BUILD)

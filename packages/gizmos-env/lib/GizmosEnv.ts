@@ -188,7 +188,10 @@ export class GizmosEnv {
     switch (this.state.curr_stage) {
       case Stage.MAIN:
         actions.add(ActionType.END)
-        if (this.state.energy_board.length > 0) {
+        if (
+          this.state.energy_board.length > 0 &&
+          this.curr_player.can_add_energy
+        ) {
           actions.add(ActionType.PICK)
         }
         if (
