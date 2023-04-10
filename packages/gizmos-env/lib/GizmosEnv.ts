@@ -127,6 +127,18 @@ export class GizmosEnv {
     return this.state.energy_pool.splice(0, Math.min(num, len))
   }
 
+  replenish_energy_from_pool() {
+    const replenish_num = Math.min(
+      6 - this.state.energy_board.length,
+      this.state.energy_pool.length
+    )
+
+    this.state.energy_board = [
+      ...this.state.energy_board,
+      ...this.draw_energy_from_pool(replenish_num),
+    ]
+  }
+
   drop_energy_to_pool(energy_num: Record<Energy, number>) {
     const energy_list: Energy[] = []
     ALL_ENERGY_TYPES.forEach(energy => {
@@ -134,11 +146,11 @@ export class GizmosEnv {
         energy_list.push(energy)
       }
     })
-
     this.state.energy_pool = shuffle([
       ...this.state.energy_pool,
       ...energy_list,
     ])
+    this.replenish_energy_from_pool()
   }
 
   pick_energy_from_board(energy: Energy) {
@@ -147,10 +159,7 @@ export class GizmosEnv {
       throw new Error('[pick_energy_from_board] no such energy')
     }
     this.state.energy_board.splice(index, 1)
-    this.state.energy_board = [
-      ...this.state.energy_board,
-      ...this.draw_energy_from_pool(1),
-    ]
+    this.replenish_energy_from_pool()
     return energy
   }
 

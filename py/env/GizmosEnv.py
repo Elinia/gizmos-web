@@ -118,12 +118,18 @@ class GizmosEnv(Env):
         del self.state['energy_pool'][:min(num, _len)]
         return energy
 
+    def replenish_energy_from_pool(self):
+        replenish_num = min(
+            6 - len(self.state['energy_board']), len(self.state['energy_pool']))
+        self.state['energy_board'] += self.draw_energy_from_pool(replenish_num)
+
     def drop_energy_to_pool(self, energy_num: dict[Energy, int]):
         energy_list = []
         for energy in ALL_ENERGY_TYPES:
             energy_list += [energy]*energy_num[energy]
         self.state['energy_pool'] += energy_list
         shuffle(self.state['energy_pool'])
+        self.replenish_energy_from_pool()
 
     def pick_energy_from_board(self, energy: Energy):
         try:
@@ -131,8 +137,7 @@ class GizmosEnv(Env):
         except ValueError:
             raise Exception('[pick_energy_from_board] no such energy')
         self.state['energy_board'].pop(index)
-        self.state['energy_board'] = self.state['energy_board'] + \
-            self.draw_energy_from_pool(1)
+        self.replenish_energy_from_pool()
         return energy
 
     def pick_gizmo_from_research(self, id: int):
