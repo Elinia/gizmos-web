@@ -9,3 +9,7 @@ export function render_level(level: AllGizmoLevel) {
 export function connect_socket_as_player() {
   return io(`ws://${PUBLIC_SERVER_HOST}:${PUBLIC_SERVER_PORT}/player`)
 }
+
+export function connect_socket_as_observer() {
+  return io(`ws://${PUBLIC_SERVER_HOST}:${PUBLIC_SERVER_PORT}/observer`)
+}

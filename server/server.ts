@@ -42,6 +42,7 @@ function getEnv() {
 function broadcastAction(socket: Socket, action: Action) {
   const info = getPlayerInfo(socket.id)
   io.of('/player').emit('action', { name: info.name, action })
+  io.of('/observer').emit('action', { name: info.name, action })
   replay.push({ name: info.name, action })
 }
 
@@ -52,6 +53,7 @@ function broadcastObservation() {
     const observation = env.observation(i)
     info.socket.emit('observation', observation)
     if (i === observation.curr_player_index) {
+      io.of('/observer').emit('observation', observation)
       const { gizmos, ...rob } = observation
       replay.push(clone(rob))
     }
@@ -62,6 +64,7 @@ function broadcastRoom() {
   const roomInfo: { name: string; ready: boolean }[] = []
   playersInfo.forEach(({ name, ready }) => roomInfo.push({ name, ready }))
   io.of('/player').emit('room', roomInfo)
+  io.of('/observer').emit('room', roomInfo)
 }
 
 function startGame() {
@@ -80,6 +83,13 @@ function startGame() {
     })
     info.socket.emit('start', playerList)
   })
+  io.of('/observer').emit(
+    'start',
+    playersSocketID.map((id, i) => ({
+      name: getPlayerInfo(id).name,
+      index: i,
+    }))
+  )
   broadcastObservation()
 }
 
@@ -91,8 +101,10 @@ function endGame() {
     playersInfo.set(id, { ...info, ready: false })
   })
   io.of('/player').emit('replay', replay)
+  io.of('/observer').emit('replay', replay)
   replay = []
   io.of('/player').emit('end')
+  io.of('/observer').emit('end')
   broadcastRoom()
 }
 
@@ -159,5 +171,29 @@ io.of('/player').on('connection', socket => {
     const env = getEnv()
     const playerIndex = playersSocketID.indexOf(socket.id)
     socket.emit('observation', env.observation(playerIndex))
+  })
+})
+
+io.of('/observer').on('connection', socket => {
+  console.log(`[connect] ${socket.id}`)
+  broadcastRoom()
+  if (globalEnv) {
+    socket.emit(
+      'start',
+      playersSocketID.map((id, i) => ({
+        name: getPlayerInfo(id).name,
+        index: i,
+      }))
+    )
+    socket.emit('observation', globalEnv.observation(0))
+  }
+
+  socket.on('disconnect', reason => {
+    console.log(`[disconnect] ${socket.id}`)
+  })
+
+  socket.on('observation', () => {
+    const env = getEnv()
+    socket.emit('observation', env.observation(env.state.curr_player_index))
   })
 })

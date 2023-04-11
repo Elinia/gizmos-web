@@ -45,6 +45,8 @@ async def broadcast_action(sid: str, action: Action):
     info = get_player_info(sid)
     await sio.emit('action', {'name': info['name'],
                               'action': action}, namespace='/player')
+    await sio.emit('action', {'name': info['name'],
+                              'action': action}, namespace='/observer')
     replay.append({'name': info['name'], 'action': action})
 
 
@@ -54,6 +56,7 @@ async def broadcast_observation():
         observation = env.observation(i)
         await sio.emit('observation', observation, room=sid, namespace='/player')
         if i == observation['curr_player_index']:
+            await sio.emit('observation', observation, namespace='/observer')
             clone = copy.deepcopy(observation)
             clone.pop('gizmos')
             replay.append(clone)
@@ -64,6 +67,7 @@ async def broadcast_room():
     for info in players_info.values():
         room_info.append({'name': info['name'], 'ready': info['ready']})
     await sio.emit('room', room_info, namespace='/player')
+    await sio.emit('room', room_info, namespace='/observer')
 
 
 async def start_game():
@@ -75,21 +79,31 @@ async def start_game():
     for sid in players_info.keys():
         player_list = [{
             'name': get_player_info(_sid)['name'],
-            'index':i,
+            'index': i,
             'me':_sid == sid
         } for i, _sid in enumerate(players_sid)]
         await sio.emit('start', player_list, room=sid, namespace='/player')
+
+    player_list = [{
+        'name': get_player_info(sid)['name'],
+        'index': i,
+    } for i, sid in enumerate(players_sid)]
+    await sio.emit('start', player_list, namespace='/observer')
+
     await broadcast_observation()
 
 
 async def end_game():
-    global global_env, players_sid
+    global global_env, players_sid, replay
     global_env = None
     players_sid = []
     for info in players_info.values():
         info['ready'] = False
     await sio.emit('replay', replay, namespace='/player')
+    await sio.emit('replay', replay, namespace='/observer')
+    replay = []
     await sio.emit('end', namespace='/player')
+    await sio.emit('end', namespace='/observer')
     await broadcast_room()
 
 
@@ -151,6 +165,29 @@ async def observation(sid: str):
     env = get_env()
     player_index = players_sid.index(sid)
     await sio.emit('observation', env.observation(player_index), room=sid, namespace='/player')
+
+
+@sio.event(namespace='/observer')
+async def connect(sid: str, environ, auth):
+    print('[connect] {}'.format(sid))
+    await broadcast_room()
+    if global_env is not None:
+        player_list = [{
+            'name': get_player_info(sid)['name'],
+            'index': i,
+        } for i, sid in enumerate(players_sid)]
+        await sio.emit('start', player_list, namespace='/observer')
+
+
+@sio.event(namespace='/observer')
+async def disconnect(sid: str):
+    print('[disconnect] {}'.format(sid))
+
+
+@sio.event(namespace='/observer')
+async def observation(sid: str):
+    env = get_env()
+    await sio.emit('observation', env.observation(env.state['curr_player_index']), room=sid, namespace='/observer')
 
 
 if __name__ == '__main__':

@@ -2,14 +2,17 @@ import type { Socket } from 'socket.io-client'
 import type { Energy, GizmoLevel } from 'gizmos-env/common'
 import { ActionType, type Action, type Observation } from 'gizmos-env/GizmosEnv'
 import { derived, get, writable } from 'svelte/store'
-import { connect_socket_as_player } from './helpers.js'
+import {
+  connect_socket_as_player,
+  connect_socket_as_observer,
+} from './helpers.js'
 import { GizmosGame } from './game.js'
 import type { ActionLog, PlayerList, Replay } from './types.js'
 
 type RoomInfo = { name: string; ready: boolean }[]
 
 export class GizmosClient {
-  socket: Socket
+  socket: Socket | null = null
   socket_status = writable<'green' | 'red' | 'pending'>('pending')
   pending = writable(false)
 
@@ -24,18 +27,18 @@ export class GizmosClient {
   game = new GizmosGame()
 
   login = (name: string) => {
-    // FIXME: not robust to get name here
+    this.init_player_socket()
     this.name.set(name)
-    this.socket.emit('login', { name })
+    this.socket?.emit('login', { name })
   }
 
   ready = () => {
-    this.socket.emit('ready')
+    this.socket?.emit('ready')
   }
 
   private step = (action: Action) => {
     this.pending.set(true)
-    this.socket.emit('action', action)
+    this.socket?.emit('action', action)
   }
 
   pick = (energy: Energy) => {
@@ -127,45 +130,63 @@ export class GizmosClient {
   }
 
   destroy = () => {
-    this.socket.disconnect()
+    this.socket?.disconnect()
   }
 
-  constructor(socket?: Socket) {
-    this.socket = socket ?? connect_socket_as_player()
-    this.socket.on('room', (room_info: RoomInfo) => {
+  init_socket = (socket: Socket) => {
+    this.socket = socket
+    socket.on('room', (room_info: RoomInfo) => {
       this.room_info.set(room_info)
     })
-    this.socket.on('observation', (observation: Observation) => {
+    socket.on('observation', (observation: Observation) => {
       this.game.on_observation(observation)
       this.pending.set(false)
     })
-    this.socket.on('action', ({ name, action }: ActionLog) => {
+    socket.on('action', ({ name, action }: ActionLog) => {
       this.game.on_action({ name, action })
     })
-    this.socket.on('start', (player_list: PlayerList) => {
+    socket.on('start', (player_list: PlayerList) => {
       this.game_ongoing.set(true)
       this.game.player_list.set(player_list)
     })
-    this.socket.on('end', () => {
+    socket.on('end', () => {
       this.game_ongoing.set(false)
       this.game.observation.set(null)
       this.game.env.set(null)
     })
-    this.socket.on('replay', replay => {
+    socket.on('replay', replay => {
       this.replay.set(replay)
     })
-    this.socket.on('error', msg => alert(msg))
-    this.socket.on('connect', () => {
+    socket.on('error', msg => alert(msg))
+    socket.on('connect', () => {
       console.log('[socket.connect]')
       this.socket_status.set('green')
     })
-    this.socket.on('disconnect', reason => {
+    socket.on('disconnect', reason => {
       console.error('[socket.disconnect]', reason)
       this.socket_status.set('red')
     })
-    this.socket.on('connect_error', err => {
+    socket.on('connect_error', err => {
       console.error('[socket.connect_error]', err)
       this.socket_status.set('red')
     })
+  }
+
+  init_observer_socket = () => {
+    this.socket?.disconnect()
+    this.init_socket(connect_socket_as_observer())
+  }
+
+  init_player_socket = () => {
+    this.socket?.disconnect()
+    this.init_socket(connect_socket_as_player())
+  }
+
+  constructor(socket?: Socket) {
+    if (socket) {
+      this.init_socket(socket)
+    } else {
+      this.init_observer_socket()
+    }
   }
 }
