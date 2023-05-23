@@ -4,11 +4,11 @@ import socketio
 from env.common import Stage
 from env.types import Observation, Action, ActionType
 from ai_2p.IDGen import IDGen
-from ai_2p.PPOModel import PPOModel
+from ai_2p.PPOModel_v2_1 import PPOModel
 
-idg = IDGen(path='ai_2p/d.json')
-models = [PPOModel(idg, path='ai_2p/PPO-1p40000.pkl'),
-          PPOModel(idg, path='ai_2p/PPO-2p40000.pkl')]
+idg = IDGen(path='ai_2p/d-v2_1.json')
+models = [PPOModel(idg, path='ai_2p/PPOModel_v2_1-1px.pkl'),
+          PPOModel(idg, path='ai_2p/PPOModel_v2_1-2px.pkl')]
 
 
 class Player(TypedDict):

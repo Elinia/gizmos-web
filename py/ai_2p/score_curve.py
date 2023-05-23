@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 
-f = open("SARSA-v3.log")
+f = open("PPO_v2_1.log")
 
 cnt = 0
 x = []
