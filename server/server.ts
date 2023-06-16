@@ -54,8 +54,7 @@ function broadcastObservation() {
     info.socket.emit('observation', observation)
     if (i === observation.curr_player_index) {
       io.of('/observer').emit('observation', observation)
-      const { gizmos, ...rob } = observation
-      replay.push(clone(rob))
+      replay.push(clone(observation))
     }
   })
 }

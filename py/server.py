@@ -58,7 +58,7 @@ async def broadcast_observation():
         if i == observation['curr_player_index']:
             await sio.emit('observation', observation, namespace='/observer')
             clone = copy.deepcopy(observation)
-            clone.pop('gizmos')
+            # clone.pop('gizmos')
             replay.append(clone)
 
 
