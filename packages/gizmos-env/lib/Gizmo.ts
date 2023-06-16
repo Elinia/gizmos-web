@@ -37,7 +37,7 @@ export interface GizmoInfo {
   id: number
   active: boolean
   used: boolean
-  where: 'excluded' | 'pool' | 'board' | 'research' | 'file' | 'player'
+  where: 'unknown' | 'board' | 'research' | 'file' | 'player'
   belongs_to: number | null
 }
 export abstract class Gizmo<Level = GizmoLevel> {
@@ -150,7 +150,10 @@ export abstract class Gizmo<Level = GizmoLevel> {
       id: this.id,
       active: this.active,
       used: this.used,
-      where: this.where,
+      where:
+        this.where === 'excluded' || this.where === 'pool'
+          ? 'unknown'
+          : this.where,
       belongs_to: this.belongs_to,
     }
   }

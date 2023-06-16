@@ -75,7 +75,7 @@ class GizmoInfo(TypedDict):
     id: int
     active: bool
     used: bool
-    where: Literal['excluded', 'pool', 'board', 'research', 'file', 'player']
+    where: Literal['unknown', 'board', 'research', 'file', 'player']
     belongs_to: int | None
 
 
@@ -166,7 +166,7 @@ class Gizmo:
             'id': self.id,
             'active': self.active,
             'used': self.used,
-            'where': self.where,
+            'where': 'unknown' if self.where == 'excluded' or self.where == 'pool' else self.where,
             'belongs_to': self.belongs_to,
         }
 
