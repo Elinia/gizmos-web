@@ -11,7 +11,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 class ReplayBuffer(object):
-    def __init__(self, max_size=int(1e5)):
+    def __init__(self, max_size=int(3e3)):
         self.max_size = max_size
         self.ptr = [0, 0]
         self.size = [0, 0]
@@ -43,7 +43,6 @@ class ReplayBuffer(object):
 
     def sample(self, nowp, batch_size):
         ind = np.random.randint(0, self.size[nowp], size=batch_size)
-
         return (
             torch.FloatTensor(self.ids[nowp][ind]).to(self.device),
             torch.FloatTensor(self.ds[nowp][ind]).to(self.device),
@@ -147,11 +146,11 @@ class TD3(Feature):
     def __init__(
             self,
             idg,
-            discount=0.99,
+            discount=0.999,
             tau=0.005,
             policy_noise=0.2,
             noise_clip=0.5,
-            policy_freq=8
+            policy_freq=2
     ):
         self.model_name = "TD3"
         self.idg = idg
@@ -165,7 +164,7 @@ class TD3(Feature):
         self.criticV = CriticV().to(device)
         self.criticV_target = copy.deepcopy(self.criticV)
         self.optimizer = torch.optim.Adam(
-            set(chain(self.criticA.parameters(), self.criticV.parameters())), lr=3e-4)
+            set(chain(self.criticA.parameters(), self.criticV.parameters())), lr=1e-4)
 
         self.discount = discount
         self.tau = tau
@@ -183,9 +182,9 @@ class TD3(Feature):
                 dense_feature, (-1, Feature.dense_len))
             ob_id = torch.reshape(
                 _id_feature[:, :Feature.ob_id_len], (-1, 1)).to(torch.long)
-            ob_dense = _dense_feature[:, -Feature.ob_dense_len:]
+            ob_dense = _dense_feature[:, :Feature.ob_dense_len]
             action_id = torch.reshape(
-                _id_feature[:, :Feature.act_id_len], (-1, 1)).to(torch.long)
+                _id_feature[:, -Feature.act_id_len:], (-1, 1)).to(torch.long)
             action_dense = _dense_feature[:, -Feature.act_dense_len:]
             # print("1", ob_id, ob_dense)
             # print("2", action_id, action_dense)
@@ -202,7 +201,8 @@ class TD3(Feature):
 
             A = self.criticA.A1(batch_state, batch_action)
             # if random.random() < 0.1:
-            action = (A + np.random.normal(0, 0.001, size=A.shape))
+            action = A
+            # action = (A + np.random.normal(0, 0.001, size=A.shape))
             # else:
             #     action = Q
             # print(Q.shape, action.shape)
@@ -211,7 +211,7 @@ class TD3(Feature):
         # state = torch.FloatTensor(state.reshape(1, -1)).to(device)
         # return self.actor(state).cpu().data.numpy().flatten()
 
-    def train(self, nowp, replay_buffer: ReplayBuffer, batch_size=256):
+    def train(self, nowp, replay_buffer: ReplayBuffer, batch_size=512):
         self.total_it += 1
         # Sample replay buffer
         ids, ds, next_ids, next_ds, reward, done = replay_buffer.sample(
@@ -220,9 +220,9 @@ class TD3(Feature):
         _dense_feature = torch.reshape(ds, (-1, Feature.dense_len))
         ob_id = torch.reshape(
             _id_feature[:, :Feature.ob_id_len], (-1, 1)).to(torch.long)
-        ob_dense = _dense_feature[:, -Feature.ob_dense_len:]
+        ob_dense = _dense_feature[:, :Feature.ob_dense_len]
         action_id = torch.reshape(
-            _id_feature[:, :Feature.act_id_len], (-1, 1)).to(torch.long)
+            _id_feature[:, -Feature.act_id_len:], (-1, 1)).to(torch.long)
         action_dense = _dense_feature[:, -Feature.act_dense_len:]
         state = torch.concat([self.embedding_table.embedding_look_up(
             ob_id).view(-1, Feature.ob_id_len * self.embedding_table.embedding_len), ob_dense], dim=1)
@@ -233,7 +233,7 @@ class TD3(Feature):
             _dense_feature = torch.reshape(next_ds, (-1, Feature.dense_len))
             ob_id = torch.reshape(
                 _id_feature[:, :Feature.ob_id_len], (-1, 1)).to(torch.long)
-            ob_dense = _dense_feature[:, -Feature.ob_dense_len:]
+            ob_dense = _dense_feature[:, :Feature.ob_dense_len]
             next_state = torch.concat([self.embedding_table.embedding_look_up(ob_id).view(-1,
                                                                                           Feature.ob_id_len * self.embedding_table.embedding_len), ob_dense], dim=1)
             # Compute the target Q value
@@ -242,23 +242,40 @@ class TD3(Feature):
             target_V = reward + done * self.discount * target_V
 
         # Get current Q estimates
-        current_A1, current_A2 = self.criticA(state, action)
+        current_A1 = self.criticA.A1(state, action)
         current_V1, current_V2 = self.criticV(state)
         # Compute critic loss
-        critic_loss = F.mse_loss(
-            current_A1 + current_V1, target_V) + F.mse_loss(current_A2 + current_V2, target_V)
+        critic_loss = F.mse_loss(current_A1 , target_V) + \
+            + F.mse_loss(current_V1 , target_V) + F.mse_loss(current_V2 , target_V)
+        # critic_loss = F.mse_loss(
+        #     current_A1 + current_V1, target_V) + F.mse_loss(current_A2 + current_V2, target_V)
 
         # Optimize the critic
         self.optimizer.zero_grad()
         critic_loss.backward()
-        # print(torch.sum(torch.abs(self.embedding_table.base_embedding.grad)), "?")
         self.optimizer.step()
 
         # Delayed policy updates
         if self.total_it % self.policy_freq == 0:
+            # print("step", self.total_it, "player", nowp, "loss ", critic_loss, "?", current_A1[:3], current_V1[:3], target_V[:3])
             # Update the frozen target models
             # for param, target_param in zip(self.criticQ.parameters(), self.criticQ_target.parameters()):
             #     target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
             for param, target_param in zip(self.criticV.parameters(), self.criticV_target.parameters()):
                 target_param.data.copy_(
                     self.tau * param.data + (1 - self.tau) * target_param.data)
+
+    def save(self, filename):
+        torch.save(self.criticA.state_dict(), filename + "_criticA")
+        torch.save(self.criticV.state_dict(), filename + "_criticV")
+        # torch.save(self.optimizer.state_dict(), filename + "_optimizer")
+        torch.save(self.embedding_table.state_dict(), filename + "_emb")
+
+    def load(self, filename):
+
+        self.criticA.load_state_dict(torch.load(filename + "_criticA"))
+        self.criticV.load_state_dict(torch.load(filename + "_criticV"))
+        # self.optimizer.load_state_dict(torch.load(filename + "_optimizer"))
+        self.embedding_table.load_state_dict(torch.load(filename + "_emb"))
+
+        self.criticV_target = copy.deepcopy(self.criticV)
