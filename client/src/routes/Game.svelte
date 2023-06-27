@@ -1,13 +1,14 @@
 <script lang="ts">
   import { readable, type Readable } from 'svelte/store'
-  import { BuildMethod, type GizmoLevel } from 'gizmos-env/common'
+  import { BuildMethod } from 'gizmos-env/common'
   import { ActionType } from 'gizmos-env/GizmosEnv'
   import type { BuildSolution, PlayerInfo } from 'gizmos-env/Player'
   import Me from './Me.svelte'
+  import Board from './Board.svelte'
   import Gizmo from './Gizmo.svelte'
   import Energy from './Energy.svelte'
   import Log from './Log.svelte'
-  import { render_level } from '$lib/helpers.js'
+  import PlayerState from './PlayerState.svelte'
   import type { GizmosClient } from '$lib/client.js'
   import type { GizmosGame } from '$lib/game.js'
 
@@ -31,8 +32,6 @@
 
   $: console.log($observation)
   $: console.log($env, $env?.action_space)
-
-  const LEVELS: GizmoLevel[] = [3, 2, 1]
 
   let build_dialog_element: HTMLDialogElement
   let build_dialog: {
@@ -103,99 +102,39 @@
       </span>
     </div>
 
-    <Me {game} {use_gizmo} {give_up} {end} {show_build_dialog} />
-
-    Board:
-    <div class="m-10 flex flex-col gap-2 items-center">
-      <div class:avail={$is_avail[ActionType.PICK]}>
-        Pick energy:
-        <div class="energy">
-          {#each $observation.energy_board as energy}
-            <button
-              class={`w-5 h-5 rounded-full ${energy}`}
-              on:click={() => pick(energy)}
-            />
-          {/each}
-        </div>
-        <div class="text-xs">
-          remain: {$observation.energy_pool_num}
-        </div>
+    <div class="game-board">
+      <div class="area me">
+        <Me {game} {use_gizmo} {give_up} {end} {show_build_dialog} />
       </div>
-      {#each LEVELS as level}
-        <div class="gizmos justify-center">
-          <button
-            class="w-36"
-            class:avail={$is_avail[ActionType.RESEARCH]}
-            disabled={!$is_avail[ActionType.RESEARCH]}
-            on:click={() => research(level)}
-          >
-            <div>{render_level(level)}</div>
-            {#if $me}
-              <div>🔍: {$me.research_num}</div>
-            {/if}
-            <div class="text-xs">
-              remain: {$observation.gizmos_pool_num[level]}
-            </div>
-          </button>
-          {#each $observation.gizmos_board[level] as gizmo}
-            {@const solutions = $is_avail[ActionType.BUILD]
-              ? $env.build_solutions(gizmo.id, BuildMethod.DIRECTLY)
-              : []}
-            {@const can_build = solutions.length > 0}
-            <div>
+      <div class="area board">
+        <Board {game} {pick} {file} {research} {show_build_dialog} />
+      </div>
+      <div class="log">
+        <Log log={$log} />
+      </div>
+      <div class="area players">
+        {#each $observation.players as player, i}
+          <div class="font-bold text-lg">
+            {$player_list[i].name}
+          </div>
+          <PlayerState env={$env} {player} />
+          <div class="gizmos-simple">
+            {#each player.gizmos as gizmo}
+              <Gizmo info={gizmo} simple={true} />
+            {/each}
+          </div>
+          <div>
+            📁 ({player.filed.length}/{player.max_file_num}):
+          </div>
+          <div class="gizmos-simple">
+            {#each player.filed as gizmo}
               <Gizmo info={gizmo} />
-              <button
-                class:avail={can_build}
-                disabled={!can_build}
-                on:click={() =>
-                  show_build_dialog(gizmo.id, BuildMethod.DIRECTLY, solutions)}
-              >
-                🔧
-              </button>
-              <button
-                class:avail={$is_avail[ActionType.FILE]}
-                disabled={!$is_avail[ActionType.FILE]}
-                on:click={() => file(gizmo.id)}
-              >
-                📁
-              </button>
-            </div>
-          {/each}
-        </div>
-      {/each}
+            {/each}
+          </div>
+        {/each}
+      </div>
     </div>
-    Players:
-    {#each $observation.players as player, i}
-      <div class="font-bold text-lg">
-        {$player_list[i].name}
-      </div>
-      <div>
-        ⭐:{player.point_token} 🔮:{player.total_energy_num}/{player.max_energy_num}
-        📁:{player.filed.length}/{player.max_file_num} 🔍:{player.research_num}
-      </div>
-      <div>Estimated score: {player.score}</div>
-      <div class="energy">
-        <div>Energy:</div>
-        <Energy energy_num={player.energy_num} />
-      </div>
-      <div>
-        Gizmos ({player.gizmos.length}/{$env.max_gizmos_num} Level3 {player
-          .level3_gizmos.length}/{$env.max_level3_gizmos_num}):
-      </div>
-      <div class="gizmos-simple">
-        {#each player.gizmos as gizmo}
-          <Gizmo info={gizmo} simple={true} />
-        {/each}
-      </div>
-      <div>
-        File ({player.filed.length}/{player.max_file_num}):
-      </div>
-      <div class="gizmos-simple">
-        {#each player.filed as gizmo}
-          <Gizmo info={gizmo} />
-        {/each}
-      </div>
-    {/each}
+
     <dialog bind:this={build_dialog_element}>
       <form method="dialog">
         {#if build_dialog}
@@ -204,12 +143,12 @@
               <button class="avail" on:click={() => on_build($me, solution)}>
                 Solution {i}:
                 <div class="energy">
-                  Energy cost:
+                  Spend:
                   <Energy energy_num={solution.energy_num} />
                 </div>
                 {#if solution.gizmos.length > 0}
                   <div class="gizmos-simple">
-                    Gizmos cost:
+                    Use:
                     {#each solution.gizmos as gizmo}
                       <Gizmo info={gizmo} simple={true} />
                     {/each}
@@ -276,9 +215,41 @@
     </dialog>
   </div>
 {/if}
-<Log log={$log} />
+{#if !ongoing}
+  <Log log={$log} />
+{/if}
 
 <style lang="postcss">
+  .game-board {
+    @apply grid gap-4 p-4;
+    grid-template-columns: 48em minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
+    grid-template-areas:
+      'me me'
+      'board log'
+      'players players';
+  }
+
+  .area {
+    @apply rounded-md bg-blue-200 p-2 flex flex-col gap-2;
+  }
+
+  .me {
+    grid-area: me;
+  }
+
+  .board {
+    grid-area: board;
+  }
+
+  .log {
+    grid-area: log;
+  }
+
+  .players {
+    grid-area: players;
+  }
+
   .pending .avail {
     @apply pointer-events-none outline-none;
   }

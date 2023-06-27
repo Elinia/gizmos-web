@@ -1,22 +1,24 @@
 <script lang="ts">
   import { render_level } from '$lib/helpers.js'
-  import type { ActionLog } from '$lib/types.js'
+  import type { LogEntry } from '$lib/types.js'
   import { ActionType } from 'gizmos-env/GizmosEnv'
   import { gizmos } from 'gizmos-env/gizmos_pool'
   import Energy from './Energy.svelte'
   import Gizmo from './Gizmo.svelte'
 
-  export let log: (string | ActionLog)[]
+  export let log: LogEntry[]
 </script>
 
 <div class="log">
-  {#each log as msg}
-    {#if typeof msg === 'string'}
-      <div>{msg}</div>
+  {#each log as logEntry}
+    {#if logEntry.type === 'msg'}
+      <div>{logEntry.msg}</div>
+    {:else if logEntry.type === 'turn'}
+      <div class="bg-green-200 -mx-2 text-center">Turn {logEntry.turn}</div>
     {:else}
-      {@const action = msg.action}
-      <div class="flex items-center gap-2">
-        <span>{msg.name}:</span>
+      {@const action = logEntry.action}
+      <div class="flex flex-wrap items-center gap-2">
+        <span>{logEntry.name}:</span>
         {#if action.type === ActionType.PICK}
           <div>👌</div>
           <div class={`w-5 h-5 rounded-full ${action.energy}`} />
@@ -88,6 +90,6 @@
 
 <style lang="postcss">
   .log {
-    @apply resize-y h-80 m-2 p-2 overflow-auto bg-teal-100;
+    @apply resize-y h-80 p-2 overflow-auto bg-blue-200 flex flex-col gap-1;
   }
 </style>

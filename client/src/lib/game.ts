@@ -2,7 +2,7 @@ import { Stage } from 'gizmos-env/common'
 import { ActionType, GizmosEnv, type Observation } from 'gizmos-env/GizmosEnv'
 import type { PlayerInfo } from 'gizmos-env/Player'
 import { derived, get, writable } from 'svelte/store'
-import type { ActionLog, PlayerList } from './types.js'
+import type { ActionLog, LogEntry, PlayerList } from './types.js'
 
 export class GizmosGame {
   player_list = writable<PlayerList>([])
@@ -11,7 +11,7 @@ export class GizmosGame {
     player_list => player_list.find(p => p.me)?.index
   )
 
-  log = writable<(string | ActionLog)[]>([])
+  log = writable<LogEntry[]>([])
 
   observation = writable<Omit<Observation, 'gizmos'> | null>(null)
   env = writable<GizmosEnv | null>(null)
@@ -42,7 +42,7 @@ export class GizmosGame {
     this.observation.update(prev => {
       if (!prev || observation.curr_turn > prev.curr_turn) {
         this.log.update(log => {
-          log.push(`-----Turn ${observation.curr_turn}-----`)
+          log.push({ type: 'turn', turn: observation.curr_turn })
           return log
         })
       }
@@ -60,10 +60,10 @@ export class GizmosGame {
         return
       }
       this.log.update(log => {
-        log.push('GAME OVER!')
-        log.push('Score:')
+        log.push({ type: 'msg', msg: 'GAME OVER!' })
+        log.push({ type: 'msg', msg: 'Score:' })
         observation.players.forEach((p, i) =>
-          log.push(`${player_list[i].name}: ${p.score}`)
+          log.push({ type: 'msg', msg: `${player_list[i].name}: ${p.score}` })
         )
         return log
       })
@@ -72,7 +72,7 @@ export class GizmosGame {
 
   on_action = ({ name, action }: ActionLog) => {
     this.log.update(log => {
-      log.push({ name, action })
+      log.push({ type: 'act', name, action })
       return log
     })
   }
