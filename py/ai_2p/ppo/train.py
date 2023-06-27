@@ -129,19 +129,10 @@ for i in range(start_step, 10000000):
         winner = 1
     for np in range(2):
         last = len(output[np]) - 1
-        # v = 0 + (ob['players'][np]['score']) / 1000.0
-        v = 0  # - ob[
-        # 'curr_turn'] * 10) / 100.0
         if np == winner:
-            # v += ob['players'][np]['score'] / ob['curr_turn']
-            # v += 0.1
-            if ob['curr_turn'] == 24:
-                v += 0.01
-            if ob['curr_turn'] == 23:
-                v += 0.02
-            if ob['curr_turn'] <= 22:
-                multiplier = 22 - ob['curr_turn']
-                v += 0.05 * (2 ** multiplier)
+            if ob['curr_turn'] <= 24:
+                multiplier = 24 - ob['curr_turn']
+                v = 0.01 * (2 ** multiplier)
         while last >= 0:
             output[np][last] = v
             # v *= 0.999
