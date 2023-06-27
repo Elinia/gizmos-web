@@ -10,7 +10,7 @@
     {new Array(effect.num).fill('⭐').join('')}
   {/if}
   {#if effect.type === 'free_draw'}
-    {new Array(effect.num).fill('🙈').join('')}
+    {new Array(effect.num).fill('🎲').join('')}
   {/if}
   {#if effect.type === 'energy_as_point'}
     X=🔮
