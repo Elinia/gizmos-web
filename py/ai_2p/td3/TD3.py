@@ -1,16 +1,19 @@
 import copy
+import random
 import numpy as np
 import torch
 from torch import Tensor
 import torch.nn as nn
 import torch.nn.functional as F
 from itertools import chain
+
 from .Feature import Feature
 
 if True:
     import sys
     import os
-    sys.path.append(os.path.realpath('..'))
+    sys.path.append(os.path.realpath('../..'))
+    from env.types import Observation, ActionType
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -265,6 +268,39 @@ class TD3(Feature):
             for param, target_param in zip(self.criticV.parameters(), self.criticV_target.parameters()):
                 target_param.data.copy_(
                     self.tau * param.data + (1 - self.tau) * target_param.data)
+
+    def best_action(self, ob: Observation, eps=0):
+        action_space = ob['action_space']
+
+        act = None
+        ob_id, ob_dense = self.gen_ob_feature(ob)
+        ti_id = []
+        ti_dense = []
+        end_act = None
+
+        for action in action_space:
+            if action['type'] == ActionType.END:
+                end_act = action
+                continue
+            act_id, act_dense = self.gen_action_feature(action)
+            ti_id.append(copy.copy(ob_id + act_id))
+            ti_dense.append(copy.copy(ob_dense + act_dense))
+
+        yhat = self.forward(torch.Tensor(
+            ti_id), torch.Tensor(ti_dense)).view(-1,)
+        if eps > 0 and random.random() < eps:
+            best_action = torch.rand(yhat.shape) / 1.0
+        else:
+            best_action = yhat  # + sample_gumbel(yhat.shape) / 10000.0
+
+        if best_action.numel() == 0:
+            act = end_act
+        else:
+            idx = torch.argmax(best_action)
+            act = action_space[idx]
+
+        act_id, act_dense = self.gen_action_feature(act)
+        return act, ob_id + act_id, list(map(float, ob_dense + act_dense))
 
     def save(self, path='TD3.pkl'):
         torch.save({

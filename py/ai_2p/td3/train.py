@@ -27,7 +27,6 @@ models = [TD3(idg, 'TD3-1p.pkl'), TD3(idg, 'TD3-2p.pkl')]
 best_turn: int = 20
 best_avg_score: float = 0.0
 
-max_can_num = 0
 ppo_actor_loss = 0
 ppo_critic_loss = 0
 batch_actor_loss = [0.0, 0.0]
@@ -46,14 +45,9 @@ except FileNotFoundError:
 
 for i in range(start_step, 10000000):
     env.reset()
-    last_score = 0
-    ret = 0
     input = [[], []]
     input_dense = [[], []]
     output = [[0, ], [0, ]]
-    ppo_total_loss: list[list[torch.Tensor]] = [[], []]
-    random_a = [[], []]
-    action = [[], []]
     traj = []
 
     last_score = [0, 0]
@@ -65,53 +59,12 @@ for i in range(start_step, 10000000):
         action_space = ob['action_space']
         if ob['curr_stage'] == Stage.GAME_OVER or ob['curr_turn'] > 25:
             break
-        act = None
-        ob_id, ob_dense = model.gen_ob_feature(ob)
-        ti_id = []
-        ti_dense = []
-        end_act = None
-        can_num = 0
-        debug = []
 
-        for action in action_space:
-            if action['type'] == ActionType.END:
-                end_act = action
-                # print("end", can_num)
-                continue
-            ids = "None"
-            if "id" in action.keys():
-                ids = action['id']
-            debug.append(action['type'] + str(ids))
-            act_id, act_dense = model.gen_action_feature(action)
-            ti_id.append(copy.copy(ob_id + act_id))
-            ti_dense.append(copy.copy(ob_dense + act_dense))
-            can_num += 1
-        # print("all", can_num)
-        max_can_num = max(max_can_num, can_num)
-
-        yhat = model.forward(torch.Tensor(
-            ti_id), torch.Tensor(ti_dense)).view(-1,)
-        # def sample_gumbel(shape, eps=1e-20):
-        #     U = torch.rand(shape)
-        #     return -torch.log(-torch.log(U + eps) + eps)
-        if random.random() < 0.001:
-            best_action = torch.rand(yhat.shape) / 1.0
-            random_a[np].append(True)
-        else:
-            best_action = yhat  # + sample_gumbel(yhat.shape) / 10000.0
-            random_a[np].append(False)
-        # print(yhat, best_action)
-        if best_action.numel() == 0:
-            act = end_act
-            random_a[np][-1] = False
-        else:
-            idx = torch.argmax(best_action)
-            act = action_space[idx]
+        act, id, dense = model.best_action(ob, eps=0.001)
 
         traj.append(str(ob['curr_turn']) + ": " + str(act))
-        act_id, act_dense = model.gen_action_feature(act)
-        input[np].append(list(map(int, ob_id + act_id)))
-        input_dense[np].append(list(map(float, ob_dense + act_dense)))
+        input[np].append(id)
+        input_dense[np].append(dense)
 
         # score_reward = (ob['players'][np]['score'] - last_score[np]) / 50.0
         # ball_reward = (ob['players'][np]['total_energy_num'] -
@@ -193,11 +146,8 @@ for i in range(start_step, 10000000):
         print(traj)
         print("step", i)
     if i % 10 == 0:
-        # raw_log = "Games played:", i, "; token seen:", idg.cnt, "; loss:", float(ppo_critic_loss), float(ppo_actor_loss), float(ppo_other_loss), "; end turn", ob[
-        #     'curr_turn'], "; final score",  p0['score'],  p1['score'], '; maxcan:', max_can_num
         raw_log = "Games played:", i, "; token seen:", idg.cnt, "; end turn", ob[
-            'curr_turn'], "; final score",  p0['score'],  p1['score'], '; maxcan:', max_can_num, "return: ", "{:.2f}".format(sum(output[0])), "{:.2f}".format(sum(output[1]))
-        # raw_log = "pass"
+            'curr_turn'], "; final score",  p0['score'],  p1['score'], "return: ", "{:.2f}".format(sum(output[0])), "{:.2f}".format(sum(output[1]))
         train_log = ' '.join(map(lambda x: str(x), raw_log))
         print(train_log)
         with open('TD3.log', 'a+') as log_file:
