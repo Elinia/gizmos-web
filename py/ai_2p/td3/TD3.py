@@ -7,6 +7,11 @@ import torch.nn.functional as F
 from itertools import chain
 from .Feature import Feature
 
+if True:
+    import sys
+    import os
+    sys.path.append(os.path.realpath('..'))
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
@@ -146,6 +151,7 @@ class TD3(Feature):
     def __init__(
             self,
             idg,
+            path='TD3.pkl',
             discount=0.999,
             tau=0.005,
             policy_noise=0.2,
@@ -155,14 +161,8 @@ class TD3(Feature):
         self.model_name = "TD3"
         self.idg = idg
         super().__init__(idg)
-        self.embedding_table = SharedEmbedding()
-        self.criticA = CriticA().to(device)
-        # self.criticQ = CriticQ().to(device)
-        # self.criticQ_target = copy.deepcopy(self.criticQ)
-        # self.criticQ_optimizer = torch.optim.Adam(self.criticQ.parameters(), lr=3e-4)
 
-        self.criticV = CriticV().to(device)
-        self.criticV_target = copy.deepcopy(self.criticV)
+        self.load(path)
         self.optimizer = torch.optim.Adam(
             set(chain(self.criticA.parameters(), self.criticV.parameters())), lr=1e-4)
 
@@ -245,8 +245,9 @@ class TD3(Feature):
         current_A1 = self.criticA.A1(state, action)
         current_V1, current_V2 = self.criticV(state)
         # Compute critic loss
-        critic_loss = F.mse_loss(current_A1 , target_V) + \
-            + F.mse_loss(current_V1 , target_V) + F.mse_loss(current_V2 , target_V)
+        critic_loss = F.mse_loss(current_A1, target_V) + \
+            + F.mse_loss(current_V1, target_V) + \
+            F.mse_loss(current_V2, target_V)
         # critic_loss = F.mse_loss(
         #     current_A1 + current_V1, target_V) + F.mse_loss(current_A2 + current_V2, target_V)
 
@@ -265,17 +266,25 @@ class TD3(Feature):
                 target_param.data.copy_(
                     self.tau * param.data + (1 - self.tau) * target_param.data)
 
-    def save(self, filename):
-        torch.save(self.criticA.state_dict(), filename + "_criticA")
-        torch.save(self.criticV.state_dict(), filename + "_criticV")
-        # torch.save(self.optimizer.state_dict(), filename + "_optimizer")
-        torch.save(self.embedding_table.state_dict(), filename + "_emb")
+    def save(self, path='TD3.pkl'):
+        torch.save({
+            'critic_a_state_dict': self.criticA.state_dict(),
+            'critic_v_state_dict': self.criticV.state_dict(),
+            'embedding_table_state_dict': self.embedding_table.state_dict()
+        }, path)
 
-    def load(self, filename):
-
-        self.criticA.load_state_dict(torch.load(filename + "_criticA"))
-        self.criticV.load_state_dict(torch.load(filename + "_criticV"))
-        # self.optimizer.load_state_dict(torch.load(filename + "_optimizer"))
-        self.embedding_table.load_state_dict(torch.load(filename + "_emb"))
-
+    def load(self, path='TD3.pkl'):
+        self.embedding_table = SharedEmbedding()
+        self.criticA = CriticA().to(device)
+        self.criticV = CriticV().to(device)
         self.criticV_target = copy.deepcopy(self.criticV)
+        if not os.path.exists(path):
+            print('[TD3] init model as {}'.format(path))
+        else:
+            print('[TD3] load model from {}'.format(path))
+            checkpoint = torch.load(path)
+            self.criticA.load_state_dict(checkpoint['critic_a_state_dict'])
+            self.criticV.load_state_dict(checkpoint['critic_v_state_dict'])
+            self.embedding_table.load_state_dict(
+                checkpoint['embedding_table_state_dict'])
+            self.criticV_target = copy.deepcopy(self.criticV)

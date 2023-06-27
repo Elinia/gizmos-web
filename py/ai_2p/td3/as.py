@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 
-f = open("PPO_v2_1.csv")
+f = open("TD3.csv")
 
 x = []
 y = [[], [], []]
@@ -40,11 +40,11 @@ t = smooth(t)
 
 fig, ax1 = plt.subplots()
 ax2 = ax1.twinx()
-ax1.plot(x, y[0], 'b', lw=1)
-ax1.plot(x, y[1], 'g', lw=1)
-ax2.plot(x, t, 'r--', lw=1)
-ax1.set_ylabel('score', color='b')
-ax2.set_ylabel('turn', color='r')
+# ax1.plot(x, y[0], 'b', lw=1)
+# ax1.plot(x, y[1], 'g', lw=1)
+# ax2.plot(x, t, 'r--', lw=1)
+# ax1.set_ylabel('score', color='b')
+# ax2.set_ylabel('turn', color='r')
 ax3 = ax2.twinx()
 ax3.plot(x, y[2], 'r', lw=1)
 

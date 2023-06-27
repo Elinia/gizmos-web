@@ -1,4 +1,4 @@
-# import json
+import json
 import torch
 import copy
 import random
@@ -6,13 +6,12 @@ import random
 if True:
     import sys
     import os
-    sys.path.append(os.path.realpath('..'))
-    from ai_2p.utils import Replay, log_replay
-    from ai_2p.IDGen import IDGen
-    from ai_2p.TD3 import TD3, ReplayBuffer
+    sys.path.append(os.path.realpath('../..'))
+    from ai_2p.td3.IDGen import IDGen
+    from ai_2p.td3.TD3 import TD3, ReplayBuffer
     from env.types import ActionType
     from env.common import Stage
-    from env.GizmosEnv import GizmosEnv
+    from env.GizmosEnvTraining import GizmosEnvTraining
 
 replay_buffer = ReplayBuffer()
 
@@ -21,12 +20,10 @@ def sqr(x):
     return x * x
 
 
-env = GizmosEnv(player_num=2, log=False, check=False)
+env = GizmosEnvTraining(player_num=2, model_name="TD3")
 
 idg = IDGen(path='d.json')
-models = [TD3(idg), TD3(idg)]
-models[0].load("TD3-1p100.pkl")
-models[1].load("TD3-2p100.pkl")
+models = [TD3(idg, 'TD3-1p.pkl'), TD3(idg, 'TD3-2p.pkl')]
 best_turn: int = 20
 best_avg_score: float = 0.0
 
@@ -37,6 +34,8 @@ batch_actor_loss = [0.0, 0.0]
 batch_other_loss = [0.0, 0.0]
 batch_critic_loss = [0.0, 0.0]
 batch_count = [0.0, 0.0]
+
+build_num = [0] * 112
 
 
 try:
@@ -56,7 +55,6 @@ for i in range(start_step, 10000000):
     random_a = [[], []]
     action = [[], []]
     traj = []
-    replay: Replay = []
 
     last_score = [0, 0]
     last_ball_num = [0, 0]
@@ -64,7 +62,6 @@ for i in range(start_step, 10000000):
         np = env.state['curr_player_index']
         model = models[np]
         ob = env.observation(np)
-        log_replay(replay, observation=ob)
         action_space = ob['action_space']
         if ob['curr_stage'] == Stage.GAME_OVER or ob['curr_turn'] > 25:
             break
@@ -118,7 +115,7 @@ for i in range(start_step, 10000000):
 
         # score_reward = (ob['players'][np]['score'] - last_score[np]) / 50.0
         # ball_reward = (ob['players'][np]['total_energy_num'] -
-        #                last_ball_num[np]) / 100.0
+        #                last_ball_num[np]) / 600.0
         research_pay = 0
         if act['type'] == ActionType.PICK and ob['curr_stage'] == Stage.MAIN and ob['curr_turn'] > 10:
             research_pay -= 0.1
@@ -131,13 +128,19 @@ for i in range(start_step, 10000000):
         if act['type'] == ActionType.GIVE_UP:
             research_pay -= 0.5
         if act['type'] == ActionType.BUILD:
-            cost = act['cost_energy_num']['red'] + act['cost_energy_num']['black'] + act['cost_energy_num']['blue'] + act['cost_energy_num']['yellow']
+            cost = act['cost_energy_num']['red'] + act['cost_energy_num']['black'] + \
+                act['cost_energy_num']['blue'] + \
+                act['cost_energy_num']['yellow']
             research_pay += 0.1 * cost
         if act['type'] == ActionType.BUILD_FROM_RESEARCH:
-            cost = act['cost_energy_num']['red'] + act['cost_energy_num']['black'] + act['cost_energy_num']['blue'] + act['cost_energy_num']['yellow']
+            cost = act['cost_energy_num']['red'] + act['cost_energy_num']['black'] + \
+                act['cost_energy_num']['blue'] + \
+                act['cost_energy_num']['yellow']
             research_pay += 0.1 * cost
         if act['type'] == ActionType.BUILD_FROM_FILED:
-            cost = act['cost_energy_num']['red'] + act['cost_energy_num']['black'] + act['cost_energy_num']['blue'] + act['cost_energy_num']['yellow']
+            cost = act['cost_energy_num']['red'] + act['cost_energy_num']['black'] + \
+                act['cost_energy_num']['blue'] + \
+                act['cost_energy_num']['yellow']
             research_pay += 0.1 * cost
         if act['type'] == ActionType.USE_GIZMO:
             research_pay += 0.1
@@ -145,8 +148,8 @@ for i in range(start_step, 10000000):
         last_score[np] = ob['players'][np]['score']
         last_ball_num[np] = ob['players'][np]['total_energy_num']
         env.step(np, act)
-        log_replay(replay, action={
-                   'name': model.model_name + str(np), 'action': act})
+        if act['type'] in [ActionType.BUILD, ActionType.BUILD_FROM_FILED, ActionType.BUILD_FROM_RESEARCH, ActionType.BUILD_FOR_FREE]:
+            build_num[act['id']] += 1
 
     ob = env.observation(0)
     p0 = ob['players'][0]
@@ -193,47 +196,44 @@ for i in range(start_step, 10000000):
         # raw_log = "Games played:", i, "; token seen:", idg.cnt, "; loss:", float(ppo_critic_loss), float(ppo_actor_loss), float(ppo_other_loss), "; end turn", ob[
         #     'curr_turn'], "; final score",  p0['score'],  p1['score'], '; maxcan:', max_can_num
         raw_log = "Games played:", i, "; token seen:", idg.cnt, "; end turn", ob[
-            'curr_turn'], "; final score",  p0['score'],  p1['score'], '; maxcan:', max_can_num, "return: ", sum(output[0]), sum(output[1])
+            'curr_turn'], "; final score",  p0['score'],  p1['score'], '; maxcan:', max_can_num, "return: ", "{:.2f}".format(sum(output[0])), "{:.2f}".format(sum(output[1]))
         # raw_log = "pass"
         train_log = ' '.join(map(lambda x: str(x), raw_log))
         print(train_log)
-        with open('{}.log'.format("TD3"), 'a+') as log_file:
+        with open('TD3.log', 'a+') as log_file:
             log_file.write(train_log + '\n')
 
-        # vis.line(X=torch.tensor([i, ]), Y=torch.tensor([w0 / (w0 + w1 + 0.000000001), ]), win='p0 win percent',
-        #          update='append' if not first else None, opts={'title': "p0 win percent"})
-        # vis.line(X=torch.tensor([i, ]), Y=torch.tensor([total_score[0] / (total_round + 0.000000001), ]), win='scores/turns', name="p0",
-        #          update='append' if not first else None, opts={'showlegend': True, 'title': "scores/turns"})
-        # vis.line(X=torch.tensor([i, ]), Y=torch.tensor([total_score[1] / (total_round + 0.000000001), ]), win='scores/turns', name="p1",
-        #          update='append' if not first else None)
-        # vis.line(X=torch.tensor([i, ]), Y=torch.tensor([total_round / 10.0, ]), win='turns',
-        #          update='append' if not first else None, opts={'title': "average end turn"})
-        # first = False
-        # total_score = [0, 0]
-        # total_round = 0
-        # w0 = 0
-        # w1 = 0
-    #
-    # if i % 100 == 0:
-    #     for np in range(2):
-    #         model = models[np]
-    #         model.save('{}-{}p.pkl'.format(model_name, np + 1))
-    #     with open('{}-step.log'.format(model_name), 'w+') as f:
-    #         f.write(str(i))
-    #
+        _raw_log = i, ob['curr_turn'], p0['score'], p1['score']
+        _train_log = ','.join([str(x) for x in _raw_log])
+        with open('TD3.csv', 'a+') as log_file:
+            log_file.write(_train_log + '\n')
+
     if i % 100 == 0:
         for np in range(2):
             model = models[np]
-            model.save('{}-{}p{}.pkl'.format("TD3", np + 1, i))
-    #
-    # if ob['curr_turn'] < best_turn:
-    #     best_turn = ob['curr_turn']
-    #     json_replay = json.dumps(replay)
-    #     with open('{}_pro_play.json'.format(model_name), 'w+') as f:
-    #         f.write(json_replay)
-    #
-    # if ob['curr_turn'] == best_turn and (p0['score'] + p1['score']) / ob['curr_turn'] > best_avg_score:
-    #     best_avg_score = (p0['score'] + p1['score']) / ob['curr_turn']
-    #     json_replay = json.dumps(replay)
-    #     with open('{}_pro_play.json'.format(model_name), 'w+') as f:
-    #         f.write(json_replay)
+            model.save('TD3-{}p.pkl'.format(np + 1))
+            if i % 50000 == 0:
+                model.save('TD3-{}p{}.pkl'.format(np + 1, i))
+        with open('TD3-step.log', 'w+') as f:
+            f.write(str(i))
+
+    if i % 1000 == 0:
+        res = {}
+        for i, num in enumerate(build_num):
+            res[str(i)] = num
+        js = json.dumps(res)
+        with open('TD3_build_num.json', 'w+') as f:
+            f.write(js)
+
+    turn = ob['curr_turn']
+    s0 = p0['score']
+    s1 = p1['score']
+    if turn < best_turn:
+        best_turn = turn
+        env.save_replay('TD3_replay_{}_t{}_{}vs{}.json'.format(
+            i, turn, s0, s1))
+
+    if turn == best_turn and (s0 + s1) / turn > best_avg_score:
+        best_avg_score = (s0 + s1) / turn
+        env.save_replay('TD3_replay_{}_t{}_{}vs{}.json'.format(
+            i, turn, s0, s1))
