@@ -576,7 +576,8 @@ export class GizmosEnv {
     const gizmo = getter(info.id ?? 0)
     gizmo.used = info.used ?? false
     gizmo.active = info.active ?? false
-    gizmo.where = info.where ?? 'pool'
+    const where = info.where === 'unknown' ? 'pool' : info.where
+    gizmo.where = where ?? 'excluded'
     gizmo.belongs_to = info.belongs_to ?? null
     return gizmo
   }
