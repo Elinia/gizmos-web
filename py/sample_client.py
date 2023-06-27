@@ -3,12 +3,13 @@ import socketio
 
 from env.common import Stage
 from env.types import Observation, Action, ActionType
-from ai_2p.IDGen import IDGen
-from ai_2p.PPOModel_v2_1 import PPOModel
+from ai_2p.td3.IDGen import IDGen
+from ai_2p.td3.TD3 import TD3
 
-idg = IDGen(path='ai_2p/d-v2_1.json')
-models = [PPOModel(idg, path='ai_2p/PPOModel_v2_1-1px.pkl'),
-          PPOModel(idg, path='ai_2p/PPOModel_v2_1-2px.pkl')]
+models = [
+    TD3(IDGen(path='ai_2p/td3/d.json'), path='ai_2p/td3/TD3-1p1687000.pkl'),
+    TD3(IDGen(path='ai_2p/td3/d.json'), path='ai_2p/td3/TD3-2p1687000.pkl')
+]
 
 
 class Player(TypedDict):
@@ -67,7 +68,7 @@ def observation(ob: Observation):
         return
     ob['action_space'] = [action for action in ob['action_space']
                           if action['type'] != ActionType.END]
-    action = models[index].best_action(ob)
+    action, id, dense = models[index].best_action(ob)
     step(action)
 
 
