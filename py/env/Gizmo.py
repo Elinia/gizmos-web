@@ -94,6 +94,10 @@ class Gizmo:
     where: Literal['excluded', 'pool', 'board', 'research', 'file', 'player']
     belongs_to: int | None
 
+    @property
+    def is_add_energy_effect(self):
+        return self.effect['type'] in ['free_draw', 'free_pick']
+
     def assert_available(self):
         if not self.active:
             raise Exception('gizmo not activated')

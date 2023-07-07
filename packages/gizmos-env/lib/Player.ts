@@ -90,7 +90,14 @@ export class Player {
   }
 
   get avail_gizmos() {
-    return [...this.gizmos].filter(g => g.active && !g.used)
+    const avail_gizmos = [...this.gizmos].filter(g => g.active && !g.used)
+    if (
+      !this.can_add_energy &&
+      avail_gizmos.every(g => g.is_add_energy_effect)
+    ) {
+      return []
+    }
+    return avail_gizmos
   }
 
   get can_file() {

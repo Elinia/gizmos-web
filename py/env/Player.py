@@ -191,6 +191,9 @@ class Player:
 
     @property
     def avail_gizmos(self):
+        avail_gizmos = [g for g in self.gizmos if g.active and not g.used]
+        if not self.can_add_energy and all(map(lambda g: g.is_add_energy_effect, avail_gizmos)):
+            return []
         return [g for g in self.gizmos if g.active and not g.used]
 
     @property

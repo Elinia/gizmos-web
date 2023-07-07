@@ -55,6 +55,10 @@ export abstract class Gizmo<Level = GizmoLevel> {
   where: 'excluded' | 'pool' | 'board' | 'research' | 'file' | 'player'
   belongs_to: number | null
 
+  get is_add_energy_effect() {
+    return ['free_draw', 'free_pick'].includes(this.effect.type)
+  }
+
   assert_available() {
     if (!this.active) {
       throw new Error('gizmo not activated')
