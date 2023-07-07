@@ -23,7 +23,7 @@ def sqr(x):
 env = GizmosEnvTraining(player_num=2, model_name="TD3")
 
 idg = IDGen(path='d.json')
-models = [TD3(idg, 'TD3-1p.pkl'), TD3(idg, 'TD3-2p.pkl')]
+models = [TD3(idg, 'model/TD3-1p.pkl'), TD3(idg, 'model/TD3-2p.pkl')]
 best_turn: int = 20
 best_avg_score: float = 0.0
 
@@ -38,7 +38,7 @@ build_num = [0] * 112
 
 
 try:
-    f = open('{}-step.log'.format("TD3"), 'r')
+    f = open('log/{}-step.log'.format("TD3"), 'r')
     start_step = int(f.read()) + 1
 except FileNotFoundError:
     start_step = 0
@@ -150,21 +150,21 @@ for i in range(start_step, 10000000):
             'curr_turn'], "; final score",  p0['score'],  p1['score'], "return: ", "{:.2f}".format(sum(output[0])), "{:.2f}".format(sum(output[1]))
         train_log = ' '.join(map(lambda x: str(x), raw_log))
         print(train_log)
-        with open('TD3.log', 'a+') as log_file:
+        with open('log/TD3.log', 'a+') as log_file:
             log_file.write(train_log + '\n')
 
         _raw_log = i, ob['curr_turn'], p0['score'], p1['score']
         _train_log = ','.join([str(x) for x in _raw_log])
-        with open('TD3.csv', 'a+') as log_file:
+        with open('log/TD3.csv', 'a+') as log_file:
             log_file.write(_train_log + '\n')
 
     if i % 100 == 0:
         for np in range(2):
             model = models[np]
-            model.save('TD3-{}p.pkl'.format(np + 1))
+            model.save('model/TD3-{}p.pkl'.format(np + 1))
             if i % 50000 == 0:
-                model.save('TD3-{}p{}.pkl'.format(np + 1, i))
-        with open('TD3-step.log', 'w+') as f:
+                model.save('model/TD3-{}p{}.pkl'.format(np + 1, i))
+        with open('log/TD3-step.log', 'w+') as f:
             f.write(str(i))
 
     if i % 1000 == 0:
@@ -172,7 +172,7 @@ for i in range(start_step, 10000000):
         for i, num in enumerate(build_num):
             res[str(i)] = num
         js = json.dumps(res)
-        with open('TD3_build_num.json', 'w+') as f:
+        with open('r/TD3_build_num.json', 'w+') as f:
             f.write(js)
 
     turn = ob['curr_turn']
@@ -180,10 +180,10 @@ for i in range(start_step, 10000000):
     s1 = p1['score']
     if turn < best_turn:
         best_turn = turn
-        env.save_replay('TD3_replay_{}_t{}_{}vs{}.json'.format(
+        env.save_replay('r/TD3_replay_{}_t{}_{}vs{}.json'.format(
             i, turn, s0, s1))
 
     if turn == best_turn and (s0 + s1) / turn > best_avg_score:
         best_avg_score = (s0 + s1) / turn
-        env.save_replay('TD3_replay_{}_t{}_{}vs{}.json'.format(
+        env.save_replay('r/TD3_replay_{}_t{}_{}vs{}.json'.format(
             i, turn, s0, s1))
