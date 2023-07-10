@@ -137,3 +137,4 @@ class Observation(TypedDict):
     free_pick_num: int
     truncated: bool
     action_space: list[Action]
+    result: None | list[int]

@@ -60,11 +60,21 @@ export class GizmosGame {
         return
       }
       this.log.update(log => {
-        log.push({ type: 'msg', msg: 'GAME OVER!' })
-        log.push({ type: 'msg', msg: 'Score:' })
-        observation.players.forEach((p, i) =>
-          log.push({ type: 'msg', msg: `${player_list[i].name}: ${p.score}` })
-        )
+        if (observation.result) {
+          log.push({
+            type: 'result',
+            result: observation.result.map(index => {
+              const player = player_list.find(p => p.index === index)
+              if (!player)
+                throw new Error('player in observation not in player_list')
+              return {
+                name: player.name,
+                me: player.me,
+                score: observation.players[index].score,
+              }
+            }),
+          })
+        }
         return log
       })
     }

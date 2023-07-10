@@ -33,12 +33,16 @@ class GizmosEnvTraining(GizmosEnv):
             return -999
         me = self.state['players'][playerIndex]
 
-        rank: int = 1
-        for player in self.state['players']:
-            if player.index == me.index:
-                continue
-            if player.score > me.score or len(player.gizmos) > len(me.gizmos) or player.total_energy_num > me.total_energy_num:
-                rank += 1
+        # rank: int = 1
+        # for player in self.state['players']:
+        #     if player.index == me.index:
+        #         continue
+        #     if player.score > me.score or \
+        #             len(player.gizmos) > len(me.gizmos) or \
+        #             player.total_energy_num > me.total_energy_num or \
+        #             player.index < me.index:
+        #         rank += 1
+        rank = self.result.index(me.index) + 1
 
         # winner_reward = ((1 + self.player_num) * self.player_num) // 2
         # loser_reward = 1 - rank

@@ -8,6 +8,19 @@
   import Gizmo from './Gizmo.svelte'
 
   export let log: LogEntry[]
+
+  function medal(rank: number) {
+    switch (rank) {
+      case 1:
+        return '🥇'
+      case 2:
+        return '🥈'
+      case 3:
+        return '🥉'
+      default:
+        return '🎃'
+    }
+  }
 </script>
 
 <div class="log">
@@ -18,7 +31,7 @@
       <div class="bg-green-200 -mx-2 text-center">
         {$_('turn', { values: { turn: logEntry.turn } })}
       </div>
-    {:else}
+    {:else if logEntry.type === 'act'}
       {@const action = logEntry.action}
       <div class="flex flex-wrap items-center gap-2">
         <span>{logEntry.name}:</span>
@@ -86,6 +99,16 @@
         {:else}
           <div />
         {/if}
+      </div>
+    {:else}
+      {@const result = logEntry.result}
+      <div class="bg-green-200">
+        <div class="text-lg text-center font-bold">{$_('game_over')}</div>
+        {#each result as player_result, i}
+          <div class:font-bold={player_result.me}>
+            {medal(i + 1)}: {player_result.name} ({player_result.score})
+          </div>
+        {/each}
       </div>
     {/if}
   {/each}

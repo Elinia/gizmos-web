@@ -1,6 +1,7 @@
 from __future__ import annotations
 from random import shuffle, choice
 from gymnasium import Env
+from functools import cmp_to_key
 
 from .Gizmo import Gizmo
 from .types import Action, ActionType, Observation, State, PickAction, FileAction, FileFromResearchAction, ActionBuildSolution, BuildAction, BuildFromFileAction, BuildFromResearchAction, BuildForFreeAction, ResearchAction, UseGizmoAction, GiveUpAction, EndAction
@@ -211,6 +212,22 @@ class GizmosEnv(Env):
             raise Exception('[avail_actions] unexpected stage')
         return actions
 
+    @property
+    def result(self):
+        if self.state['curr_stage'] is not Stage.GAME_OVER or self.truncated:
+            return None
+
+        def compare(a: Player, b: Player):
+            if a.score != b.score:
+                return b.score - a.score
+            if len(a.gizmos) != len(b.gizmos):
+                return len(b.gizmos) - len(a.gizmos)
+            if a.total_energy_num != b.total_energy_num:
+                return b.total_energy_num - a.total_energy_num
+            return b.index - a.index
+
+        return list(map(lambda p: p.index, sorted(self.state['players'], key=cmp_to_key(compare))))
+
     def action_avail(self, action: Action):
         if not self.check:
             return True
@@ -412,6 +429,7 @@ class GizmosEnv(Env):
             'free_pick_num': self.state['free_pick_num'],
             'truncated': self.truncated,
             'action_space': self.action_space,
+            'result': self.result,
         }
 
     def build_solutions(self, gizmo_like: Gizmo | int, method: BuildMethod, check_only: bool = False):

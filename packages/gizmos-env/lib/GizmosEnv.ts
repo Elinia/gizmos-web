@@ -84,6 +84,7 @@ export type Observation = {
   free_pick_num: State['free_pick_num']
   truncated: boolean
   action_space: Action[]
+  result: number[] | null
 }
 
 export class GizmosEnv {
@@ -278,6 +279,21 @@ export class GizmosEnv {
         throw new Error('[avail_actions] unexpected stage')
     }
     return actions
+  }
+
+  get result() {
+    if (this.state.curr_stage !== Stage.GAME_OVER || this.truncated) {
+      return null
+    }
+    const players = [...this.state.players]
+    players.sort((a, b) => {
+      if (a.score !== b.score) return b.score - a.score
+      if (a.gizmos.size !== b.gizmos.size) return b.gizmos.size - a.gizmos.size
+      if (a.total_energy_num !== b.total_energy_num)
+        return b.total_energy_num - a.total_energy_num
+      return b.index - a.index
+    })
+    return players.map(p => p.index)
   }
 
   private action_avail(action: ActionType) {
@@ -566,6 +582,7 @@ export class GizmosEnv {
       free_pick_num: this.state.free_pick_num,
       truncated: this.truncated,
       action_space: this.action_space,
+      result: this.result,
     }
   }
 
