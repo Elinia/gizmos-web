@@ -2,5 +2,8 @@
   "cSpell.words": ["lget", "SARSA", "traj", "yhat"],
   "[python]": {
     "editor.tabSize": 4
-  }
+  },
+  "i18n-ally.localesPaths": "client/src/locales",
+  "i18n-ally.enabledFrameworks": ["svelte"],
+  "i18n-ally.keystyle": "nested"
 }

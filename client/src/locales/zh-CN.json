@@ -1,0 +1,31 @@
+{
+  "build": "🔧建造",
+  "cancel": "取消",
+  "connection_status": {
+    "title": "连接状态",
+    "value": {
+      "green": "正常",
+      "pending": "连接中",
+      "red": "未连接"
+    }
+  },
+  "converter": "→转化",
+  "curr_player": "当前玩家",
+  "end_turn": "结束回合",
+  "energy": "能量",
+  "energy_row": "能量池",
+  "file": "📁存档",
+  "give_up": "放弃",
+  "join_as": "作为 {name} 加入",
+  "pick": "👌挑选",
+  "ready": "准备",
+  "remain": "剩余数量",
+  "replay": "回放",
+  "research": "🔍研究",
+  "solution": "方案",
+  "spend": "花费",
+  "stage": "阶段",
+  "turn": "第 {turn} 回合",
+  "upgrade": "➕升级",
+  "use": "使用"
+}

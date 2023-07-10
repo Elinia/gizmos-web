@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { _ } from 'svelte-i18n'
   import { render_level } from '$lib/helpers.js'
   import type { LogEntry } from '$lib/types.js'
   import { ActionType } from 'gizmos-env/GizmosEnv'
@@ -14,7 +15,9 @@
     {#if logEntry.type === 'msg'}
       <div>{logEntry.msg}</div>
     {:else if logEntry.type === 'turn'}
-      <div class="bg-green-200 -mx-2 text-center">Turn {logEntry.turn}</div>
+      <div class="bg-green-200 -mx-2 text-center">
+        {$_('turn', { values: { turn: logEntry.turn } })}
+      </div>
     {:else}
       {@const action = logEntry.action}
       <div class="flex flex-wrap items-center gap-2">

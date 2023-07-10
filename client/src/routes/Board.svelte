@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { _ } from 'svelte-i18n'
   import { BuildMethod, type GizmoLevel } from 'gizmos-env/common'
   import { ActionType } from 'gizmos-env/GizmosEnv'
   import type { BuildSolution } from 'gizmos-env/Player'
@@ -26,7 +27,7 @@
 {#if $env && $observation}
   <div class="flex flex-col gap-2 items-center">
     <div class:avail={$is_avail[ActionType.PICK]}>
-      Pick energy:
+      {$_('energy_row')}:
       <div class="energy">
         {#each $observation.energy_board as energy}
           <button
@@ -36,7 +37,7 @@
         {/each}
       </div>
       <div class="text-xs">
-        remain: {$observation.energy_pool_num}
+        {$_('remain')}: {$observation.energy_pool_num}
       </div>
     </div>
     {#each LEVELS as level}
@@ -47,12 +48,12 @@
           disabled={!$is_avail[ActionType.RESEARCH]}
           on:click={() => research(level)}
         >
-          <div>{render_level(level)}</div>
+          <div class="font-bold">{render_level(level)}</div>
           {#if $me}
-            <div>🔍: {$me.research_num}</div>
+            <div>🔍×{$me.research_num}</div>
           {/if}
           <div class="text-xs">
-            remain: {$observation.gizmos_pool_num[level]}
+            {$_('remain')}: {$observation.gizmos_pool_num[level]}
           </div>
         </button>
         {#each $observation.gizmos_board[level] as gizmo}

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { readable, type Readable } from 'svelte/store'
+  import { _ } from 'svelte-i18n'
   import { BuildMethod } from 'gizmos-env/common'
   import { ActionType } from 'gizmos-env/GizmosEnv'
   import type { BuildSolution, PlayerInfo } from 'gizmos-env/Player'
@@ -96,9 +97,9 @@
 {#if ongoing && $observation && $env}
   <div class:pending={$pending}>
     <div>
-      <span>Stage: {$observation.curr_stage}</span>
+      <span>{$_('stage')}: {$observation.curr_stage}</span>
       <span>
-        Current player: {$player_list[$observation.curr_player_index].name}
+        {$_('curr_player')}: {$player_list[$observation.curr_player_index].name}
       </span>
     </div>
 
@@ -136,19 +137,21 @@
     </div>
 
     <dialog bind:this={build_dialog_element}>
-      <form method="dialog">
+      <form method="dialog" class="flex flex-col gap-2 min-w-[10em]">
+        <div class="dialog-title">{$_('build')}</div>
         {#if build_dialog}
           <div class="flex flex-col gap-2">
             {#each build_dialog.solutions as solution, i}
               <button class="avail" on:click={() => on_build($me, solution)}>
-                Solution {i}:
+                {$_('solution')}
+                {i}:
                 <div class="energy">
-                  Spend:
+                  {$_('spend')}:
                   <Energy energy_num={solution.energy_num} />
                 </div>
                 {#if solution.gizmos.length > 0}
                   <div class="gizmos-simple">
-                    Use:
+                    {$_('use')}:
                     {#each solution.gizmos as gizmo}
                       <Gizmo info={gizmo} simple={true} />
                     {/each}
@@ -166,12 +169,13 @@
             }
           }}
         >
-          Cancel
+          {$_('cancel')}
         </button>
       </form>
     </dialog>
     <dialog bind:this={research_dialog_element}>
-      <form method="dialog">
+      <form method="dialog" class="flex flex-col gap-2">
+        <div class="dialog-title">{$_('research')}</div>
         {#if $observation.researching}
           <div class="gizmos">
             {#each $observation.researching.gizmos as g}
@@ -208,7 +212,7 @@
         {/if}
         {#if $is_avail[ActionType.GIVE_UP]}
           <button class="avail" value="cancel" on:click={() => give_up()}>
-            Give up research
+            {$_('give_up')}
           </button>
         {/if}
       </form>
@@ -248,6 +252,10 @@
 
   .players {
     grid-area: players;
+  }
+
+  .dialog-title {
+    @apply text-lg text-center font-bold;
   }
 
   .pending .avail {

@@ -1,0 +1,31 @@
+{
+  "build": "🔧Build",
+  "cancel": "Cancel",
+  "connection_status": {
+    "title": "Connection status",
+    "value": {
+      "green": "green",
+      "pending": "pending",
+      "red": "red"
+    }
+  },
+  "converter": "→Converter",
+  "curr_player": "Current player",
+  "end_turn": "End turn",
+  "energy": "energy",
+  "energy_row": "Energy row",
+  "file": "📁File",
+  "give_up": "Give up",
+  "join_as": "join as {name}",
+  "pick": "👌Pick",
+  "ready": "ready",
+  "remain": "remain",
+  "replay": "replay",
+  "research": "🔍Research",
+  "solution": "Solution",
+  "spend": "Spend",
+  "stage": "Stage",
+  "turn": "Turn {turn}",
+  "upgrade": "➕Upgrade",
+  "use": "Use"
+}

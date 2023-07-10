@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { _ } from 'svelte-i18n'
   import { BuildMethod } from 'gizmos-env/common'
   import { ActionType } from 'gizmos-env/GizmosEnv'
   import type { BuildSolution } from 'gizmos-env/Player'
@@ -24,11 +25,11 @@
 
 {#if $env && $me}
   {@const my_gizmos = [
-    { label: '➕Upgrade', gizmos: $me.upgrade_gizmos },
-    { label: '→Converter', gizmos: $me.converter_gizmos },
-    { label: '📁File', gizmos: $me.file_gizmos },
-    { label: '👌Pick', gizmos: $me.pick_gizmos },
-    { label: '🔧Build', gizmos: $me.build_gizmos },
+    { label: $_('upgrade'), gizmos: $me.upgrade_gizmos },
+    { label: $_('converter'), gizmos: $me.converter_gizmos },
+    { label: $_('file'), gizmos: $me.file_gizmos },
+    { label: $_('pick'), gizmos: $me.pick_gizmos },
+    { label: $_('build'), gizmos: $me.build_gizmos },
   ]}
   <PlayerState env={$env} player={$me} />
   <div class="flex gap-2">
@@ -83,14 +84,14 @@
       disabled={!$is_avail[ActionType.GIVE_UP]}
       on:click={() => give_up()}
     >
-      Give up
+      {$_('give_up')}
     </button>
     <button
       class:avail={$is_avail[ActionType.END]}
       disabled={!$is_avail[ActionType.END]}
       on:click={() => end()}
     >
-      End turn
+      {$_('end_turn')}
     </button>
   </div>
 {/if}

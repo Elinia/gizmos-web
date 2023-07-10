@@ -182,7 +182,8 @@ export class GizmosClient {
     this.init_socket(connect_socket_as_player())
   }
 
-  constructor(socket?: Socket) {
+  constructor(config: { socket?: Socket } = {}) {
+    const { socket } = config ?? {}
     if (socket) {
       this.init_socket(socket)
     } else {

@@ -1,6 +1,8 @@
 <script lang="ts">
   import { onDestroy } from 'svelte'
+  import { _ } from 'svelte-i18n'
   import { random_int } from 'gizmos-env/utils'
+  import LocaleSwitch from './LocaleSwitch.svelte'
   import Game from './Game.svelte'
   import { GizmosClient } from '$lib/client.js'
 
@@ -37,25 +39,29 @@
 </script>
 
 <div class="flex flex-col gap-2">
+  <LocaleSwitch />
   <div>
-    Connection status: <span
+    {$_('connection_status.title')}:
+    <span
       class:status-red={$socket_status === 'red'}
       class:status-green={$socket_status === 'green'}
     >
-      {$socket_status}
+      {$_(`connection_status.value.${$socket_status}`)}
     </span>
   </div>
   {#if !$observation}
     <div>
       <input bind:value={name} />
-      <button class="btn" on:click={() => login(name)}>login as {name}</button>
+      <button class="btn" on:click={() => login(name)}>
+        {$_('join_as', { values: { name } })}
+      </button>
       {#if $in_room}
-        <button class="btn" on:click={() => ready()}>ready</button>
+        <button class="btn" on:click={() => ready()}>{$_('ready')}</button>
       {/if}
     </div>
     <ul>
       {#each $room_info as info}
-        <li>{info.name} {info.ready ? '(ready)' : ''}</li>
+        <li>{info.name} {info.ready ? `(${$_('ready')})` : ''}</li>
       {/each}
       <li />
     </ul>
@@ -77,10 +83,10 @@
   />
   {#if $replay}
     {@const blob = new Blob([JSON.stringify($replay, null, 2)], {
-      type: 'application/json ',
+      type: 'application/json',
     })}
     {@const url = URL.createObjectURL(blob)}
-    <a href={url} download="replay.json">replay</a>
+    <a href={url} download="replay.json">{$_('replay')}</a>
   {/if}
 </div>
 
