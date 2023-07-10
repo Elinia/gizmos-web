@@ -48,7 +48,7 @@ for i in range(start_step, 10000000):
     input = [[], []]
     input_dense = [[], []]
     output = [[0, ], [0, ]]
-    traj = []
+    # traj = []
 
     last_score = [0, 0]
     last_ball_num = [0, 0]
@@ -62,7 +62,7 @@ for i in range(start_step, 10000000):
 
         act, id, dense = model.best_action(ob, eps=0.001)
 
-        traj.append(str(ob['curr_turn']) + ": " + str(act))
+        # traj.append(str(ob['curr_turn']) + ": " + str(act))
         input[np].append(id)
         input_dense[np].append(dense)
 
@@ -142,9 +142,9 @@ for i in range(start_step, 10000000):
 
     if i == 0:
         continue
-    if i % 100 == 0:
-        print(traj)
-        print("step", i)
+    # if i % 100 == 0:
+    #     print(traj)
+    #     print("step", i)
     if i % 10 == 0:
         raw_log = "Games played:", i, "; token seen:", idg.cnt, "; end turn", ob[
             'curr_turn'], "; final score",  p0['score'],  p1['score'], "return: ", "{:.2f}".format(sum(output[0])), "{:.2f}".format(sum(output[1]))
