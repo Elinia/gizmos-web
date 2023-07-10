@@ -107,18 +107,12 @@ for i in range(start_step, 10000000):
     ob = env.observation(0)
     p0 = ob['players'][0]
     p1 = ob['players'][1]
-    if p0['score'] != p1['score']:
-        winner = 0 if p0['score'] > p1['score'] else 1
-    elif len(p0['gizmos']) != len(p1['gizmos']):
-        winner = 0 if len(p0['gizmos']) > len(p1['gizmos']) else 1
-    elif p0['total_energy_num'] != p1['total_energy_num']:
-        winner = 0 if p0['total_energy_num'] > p1['total_energy_num'] else 1
-    else:
-        winner = 1
     for np in range(2):
         last = len(output[np]) - 1
         v = 0
-        if np == winner:
+        if ob['curr_stage'] != Stage.GAME_OVER or ob['truncated']:
+            v -= 0.9
+        elif np == ob['result'][0]:
             v += (27 - ob['curr_turn']) * (1 + ob['players'][np]
                                            ['score'] / 100.0 - ob['players'][1 - np]['score'] / 100.0)
         else:
