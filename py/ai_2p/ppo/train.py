@@ -21,8 +21,8 @@ def sqr(x):
 model_name = 'PPO_v2_1'
 env = GizmosEnvTraining(player_num=2, model_name=model_name)
 idg = IDGen(path='d.json')
-models = [PPOModel(idg, path='{}-1p.pkl'.format(model_name)),
-          PPOModel(idg, path='{}-2p.pkl'.format(model_name))]
+models = [PPOModel(idg, path='model/{}-1p.pkl'.format(model_name)),
+          PPOModel(idg, path='model/{}-2p.pkl'.format(model_name))]
 
 best_turn: int = 25
 best_avg_score: float = 0.0
@@ -40,7 +40,7 @@ build_num = [0] * 112
 
 
 try:
-    f = open('{}-step.log'.format(model_name), 'r')
+    f = open('log/{}-step.log'.format(model_name), 'r')
     start_step = int(f.read()) + 1
 except FileNotFoundError:
     start_step = 0
@@ -172,37 +172,37 @@ for i in range(start_step, 10000000):
             'curr_turn'], "; final score",  p0['score'],  p1['score'], '; maxcan:', max_can_num
         train_log = ' '.join(map(lambda x: str(x), raw_log))
         print(train_log)
-        with open('{}.log'.format(model_name), 'a+') as log_file:
+        with open('log/{}.log'.format(model_name), 'a+') as log_file:
             log_file.write(train_log + '\n')
 
         _raw_log = i, ob['curr_turn'], p0['score'], p1['score']
         _train_log = ','.join([str(x) for x in _raw_log])
-        with open('{}.csv'.format(model_name), 'a+') as log_file:
+        with open('log/{}.csv'.format(model_name), 'a+') as log_file:
             log_file.write(_train_log + '\n')
 
     if i % 100 == 0:
         for np in range(2):
             model = models[np]
-            model.save('{}-{}p.pkl'.format(model_name, np + 1))
-        with open('{}-step.log'.format(model_name), 'w+') as f:
+            model.save('model/{}-{}p.pkl'.format(model_name, np + 1))
+        with open('log/{}-step.log'.format(model_name), 'w+') as f:
             f.write(str(i))
         res = {}
         for i, num in enumerate(build_num):
             res[str(i)] = num
         js = json.dumps(res)
-        with open('{}_build_num.json'.format(model_name), 'w+') as f:
+        with open('r/{}_build_num.json'.format(model_name), 'w+') as f:
             f.write(js)
 
     if i % 10000 == 0:
         for np in range(2):
             model = models[np]
-            model.save('{}-v2-{}p{}.pkl'.format(model_name, np + 1, i))
+            model.save('model/{}-{}p{}.pkl'.format(model_name, np + 1, i))
 
     # print("???", torch.sum(models[1].base_embedding))
     if ob['curr_turn'] < best_turn:
         best_turn = ob['curr_turn']
-        env.save_replay('PPO_v2_1_replay.json')
+        env.save_replay('r/PPO_v2_1_replay.json')
 
     if ob['curr_turn'] == best_turn and (p0['score'] + p1['score']) / ob['curr_turn'] > best_avg_score:
         best_avg_score = (p0['score'] + p1['score']) / ob['curr_turn']
-        env.save_replay('PPO_v2_1_replay.json')
+        env.save_replay('r/PPO_v2_1_replay.json')
