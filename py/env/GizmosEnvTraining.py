@@ -62,7 +62,7 @@ class GizmosEnvTraining(GizmosEnv):
 
     def step(self, playerIndex: int, action: Action):
         self.log_replay(
-            action={'name': self.model_name + '_' + str(playerIndex) + 'p', 'action': action})
+            action={'name': self.model_name + '_' + str(playerIndex + 1) + 'p', 'action': action})
         return super().step(playerIndex, action)
 
     def observation(self, playerIndex: int | None = None) -> Observation:
