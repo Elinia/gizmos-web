@@ -236,7 +236,11 @@ def find_build_solutions(
                 for strategy in list_compose(opt_groups):
                     new_ts = clone_ts(ts)
                     apply_gizmo(new_ts, gizmo)
-                    if any(fn(new_ts, formula) for formula, fn in strategy):
+                    some_formulae_used = False
+                    for formula, fn in strategy:
+                        if fn(new_ts, formula):
+                            some_formulae_used = True
+                    if some_formulae_used:
                         tmp_solutions.put(new_ts)
 
     return solutions
