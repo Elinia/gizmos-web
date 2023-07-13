@@ -21,8 +21,8 @@ env = GizmosEnvTraining(player_num=2, model_name="TD3")
 
 idg = IDGen(path='d.json')
 model = TD3(idg, 'model/TD3.pkl')
-best_turn: int = 20
-best_avg_score: float = 0.0
+best_turn: int = 18
+best_avg_score: float = 3
 
 ppo_actor_loss = 0
 ppo_critic_loss = 0
@@ -63,26 +63,26 @@ for i in range(start_step, 10000000):
         input_dense[np].append(dense)
 
         research_pay = 0
-        if act['type'] == ActionType.PICK and ob['curr_stage'] == Stage.MAIN and ob['curr_turn'] > 10:
-            research_pay -= 0.1
-        if act['type'] == ActionType.RESEARCH:
-            research_pay -= 0.1
-        if act['type'] == ActionType.FILE:
-            research_pay -= 0.1
-        if act['type'] == ActionType.FILE_FROM_RESEARCH:
-            research_pay -= 0.1
-        if act['type'] == ActionType.GIVE_UP:
-            research_pay -= 0.5
-        if act['type'] == ActionType.BUILD_FOR_FREE:
-            research_pay += 0.5
-        if act['type'] in [ActionType.BUILD, ActionType.BUILD_FROM_FILED, ActionType.BUILD_FROM_RESEARCH]:
-            cost = act['cost_energy_num']['red'] + act['cost_energy_num']['black'] + \
-                act['cost_energy_num']['blue'] + \
-                act['cost_energy_num']['yellow']
-            research_pay += 0.1 * cost
-        if act['type'] == ActionType.USE_GIZMO:
-            research_pay += 0.1
-        output[np].append(research_pay / 10)
+        # if act['type'] == ActionType.PICK and ob['curr_stage'] == Stage.MAIN and ob['curr_turn'] > 10:
+        #     research_pay -= 0.1
+        # if act['type'] == ActionType.RESEARCH:
+        #     research_pay -= 0.1
+        # if act['type'] == ActionType.FILE:
+        #     research_pay -= 0.1
+        # if act['type'] == ActionType.FILE_FROM_RESEARCH:
+        #     research_pay -= 0.1
+        # if act['type'] == ActionType.GIVE_UP:
+        #     research_pay -= 0.5
+        # if act['type'] == ActionType.BUILD_FOR_FREE:
+        #     research_pay += 0.5
+        # if act['type'] in [ActionType.BUILD, ActionType.BUILD_FROM_FILED, ActionType.BUILD_FROM_RESEARCH]:
+        #     cost = act['cost_energy_num']['red'] + act['cost_energy_num']['black'] + \
+        #         act['cost_energy_num']['blue'] + \
+        #         act['cost_energy_num']['yellow']
+        #     research_pay += 0.1 * cost
+        # if act['type'] == ActionType.USE_GIZMO:
+        #     research_pay += 0.1
+        output[np].append(research_pay / 50)
         # output[np].append(0)
         last_score[np] = ob['players'][np]['score']
         last_ball_num[np] = ob['players'][np]['total_energy_num']
@@ -97,15 +97,23 @@ for i in range(start_step, 10000000):
         last = len(output[np]) - 1
         v = 0
         if ob['curr_stage'] != Stage.GAME_OVER or ob['truncated']:
-            v -= 0.9
+            v -= 2.0
         elif np == ob['result'][0]:
-            v += (26 - ob['curr_turn']) * (1 + ob['players'][np]
-                                           ['score'] / 100.0 - ob['players'][1 - np]['score'] / 100.0)
+            # v += (27 - ob['curr_turn']) * 1.0
+            # v += ob['players'][np]['score'] / 50.0 - \
+            #     ob['players'][1 - np]['score'] / 100.0
+            v += pow(1.5, 22 - ob['curr_turn']) + \
+                pow(1.4, ob['players'][np]['score'] /
+                    ob['curr_turn'] * 10 - 10)
             # v += 1.0
         else:
-            v -= 1.0
+            # v -= 20.0 / (ob['players'][np]['score'] + 1) + \
+            #     (ob['curr_turn'] - 15) / 10.0
+            v -= 4.0 / ((ob['players'][np]['score'] /
+                        ob['curr_turn']) ** 2.5 + 0.05)
+            # v -= 1.0
 
-        output[np][-1] += v * 2
+        output[np][-1] += v
         # output[np].append(v)
 
     for np in range(2):
@@ -155,12 +163,8 @@ for i in range(start_step, 10000000):
     turn = ob['curr_turn']
     s0 = p0['score']
     s1 = p1['score']
-    if turn < best_turn:
-        best_turn = turn
-        env.save_replay('r/TD3_replay_{}_t{}_{}vs{}.json'.format(
-            i, turn, s0, s1))
 
-    if turn == best_turn and (s0 + s1) / turn > best_avg_score:
+    if (s0 + s1) / turn > best_avg_score:
         best_avg_score = (s0 + s1) / turn
         env.save_replay('r/TD3_replay_{}_t{}_{}vs{}.json'.format(
             i, turn, s0, s1))

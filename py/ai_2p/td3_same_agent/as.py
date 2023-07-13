@@ -45,8 +45,8 @@ ax1.plot(x, y[1], 'g', lw=1)
 ax2.plot(x, t, 'r--', lw=1)
 ax1.set_ylabel('score', color='b')
 ax2.set_ylabel('turn', color='r')
-ax3 = ax2.twinx()
-ax3.plot(x, y[2], 'r', lw=1)
+# ax3 = ax2.twinx()
+# ax3.plot(x, y[2], 'r', lw=1)
 
 
 plt.show()
