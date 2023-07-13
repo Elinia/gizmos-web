@@ -12,11 +12,6 @@ if True:
 
 replay_buffer = ReplayBuffer()
 
-
-def sqr(x):
-    return x * x
-
-
 env = GizmosEnvTraining(player_num=2, model_name="TD3")
 
 idg = IDGen(path='d.json')
@@ -103,8 +98,8 @@ for i in range(start_step, 10000000):
             # v += ob['players'][np]['score'] / 50.0 - \
             #     ob['players'][1 - np]['score'] / 100.0
             v += pow(1.5, 22 - ob['curr_turn']) + \
-                pow(1.4, ob['players'][np]['score'] /
-                    ob['curr_turn'] * 10 - 10)
+                pow(1.3, ob['players'][np]['score'] /
+                    ob['curr_turn'] * 10 - 12)
             # v += 1.0
         else:
             # v -= 20.0 / (ob['players'][np]['score'] + 1) + \
