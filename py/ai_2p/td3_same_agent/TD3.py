@@ -6,6 +6,7 @@ from torch import Tensor
 import torch.nn as nn
 import torch.nn.functional as F
 from itertools import chain
+import json
 
 from .Feature import Feature
 
@@ -269,7 +270,7 @@ class TD3(Feature):
                 target_param.data.copy_(
                     self.tau * param.data + (1 - self.tau) * target_param.data)
 
-    def best_action(self, ob: Observation, eps=0):
+    def best_action(self, ob: Observation, eps=0, debug=False):
         action_space = ob['action_space']
 
         act = None
@@ -288,6 +289,9 @@ class TD3(Feature):
 
         yhat = self.forward(torch.Tensor(
             ti_id), torch.Tensor(ti_dense)).view(-1,)
+        if debug:
+            print(json.dumps([{'v': float(x), **action_space[i]}
+                  for i, x in enumerate(yhat)], indent=2))
         if eps > 0 and random.random() < eps:
             best_action = torch.rand(yhat.shape) / 1.0
         else:
