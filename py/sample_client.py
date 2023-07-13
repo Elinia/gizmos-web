@@ -2,19 +2,12 @@ from typing import TypedDict
 import socketio
 
 from env.common import Stage
-from env.types import Observation, Action, ActionType
-# from ai_2p.td3.IDGen import IDGen
-# from ai_2p.td3.TD3 import TD3
+from env.types import Observation, Action
 from ai_2p.td3_same_agent.IDGen import IDGen
 from ai_2p.td3_same_agent.TD3 import TD3
 
-# models = [
-#     TD3(IDGen(path='ai_2p/td3/d.json'), path='ai_2p/td3/TD3-1p1687000.pkl'),
-#     TD3(IDGen(path='ai_2p/td3/d.json'), path='ai_2p/td3/TD3-2p1687000.pkl')
-# ]
-
 model = TD3(IDGen(path='ai_2p/td3_same_agent/d.json'),
-            path='ai_2p/td3_same_agent/TD3-1638200.pkl')
+            path='ai_2p/td3_same_agent/model/TD3.pkl')
 
 
 class Player(TypedDict):
@@ -71,9 +64,6 @@ def observation(ob: Observation):
     global index
     if ob['curr_stage'] == Stage.GAME_OVER or ob['curr_player_index'] != index:
         return
-    ob['action_space'] = [action for action in ob['action_space']
-                          if action['type'] != ActionType.END]
-    # action, id, dense = models[index].best_action(ob)
     action, id, dense = model.best_action(ob)
     step(action)
 
