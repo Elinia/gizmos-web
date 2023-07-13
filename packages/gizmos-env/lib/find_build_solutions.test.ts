@@ -131,4 +131,17 @@ describe('find_build_solutions', () => {
     )
     expect(solutions.length).toBe(1)
   })
+
+  test('bug case 1 in python', () => {
+    const g1 = converter_any_level2('yellow', 'red')
+
+    const solutions = find_build_solutions(
+      'blue',
+      2,
+      init_energy_num({ red: 2, black: 1 }),
+      [g1],
+      false
+    )
+    expect(solutions.length).toBe(1)
+  })
 })
