@@ -122,6 +122,28 @@ function not_from_any_formula(
   return formula.from.energy !== 'any'
 }
 
+function formula_options(formula: ConverterFormula) {
+  const options: ApplyFormulaOption[] = []
+  if (not_from_any_formula(formula)) {
+    options.push([formula, apply_formula])
+    if (formula.to.num > 1) {
+      options.push([formula, apply_formula_any])
+    }
+  } else {
+    ALL_ENERGY_TYPES.forEach(energy => {
+      const detailed_formula = {
+        from: {
+          energy,
+          num: formula.from.num,
+        },
+        to: formula.to,
+      }
+      options.push([detailed_formula, apply_formula])
+    })
+  }
+  return options
+}
+
 class Q<T> {
   stack1: T[] = []
   stack2: T[] = []
@@ -252,28 +274,7 @@ export function find_build_solutions(
 
       // try all possible formula combinations of the gizmo
       proper_subsets(gizmo.formulae).forEach(formulae => {
-        const opt_groups: ApplyFormulaOption[][] = []
-        formulae.forEach(formula => {
-          const options: ApplyFormulaOption[] = []
-          if (not_from_any_formula(formula)) {
-            options.push([formula, apply_formula])
-            if (formula.to.num > 1) {
-              options.push([formula, apply_formula_any])
-            }
-          } else {
-            ALL_ENERGY_TYPES.forEach(energy => {
-              const detailed_formula = {
-                from: {
-                  energy,
-                  num: formula.from.num,
-                },
-                to: formula.to,
-              }
-              options.push([detailed_formula, apply_formula])
-            })
-          }
-          opt_groups.push(options)
-        })
+        const opt_groups = formulae.map(formula_options)
         list_compose(opt_groups).forEach(strategy => {
           const new_ts = clone_ts(base_new_ts)
           if (
