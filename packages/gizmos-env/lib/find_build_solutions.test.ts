@@ -18,7 +18,35 @@ describe('find_build_solutions', () => {
     ).toHaveLength(1)
   })
 
+  test('basic double converter', () => {
+    const g1 = converter_double_level2('red', 'blue')
+    const solutions = find_build_solutions(
+      'blue',
+      3,
+      init_energy_num({ blue: 2 }),
+      [g1],
+      false
+    )
+    expect(solutions.length).toBe(1)
+  })
+
   test('basic double & any converter', () => {
+    const g1 = converter_any_level2('red', 'blue')
+    const g2 = converter_double_level2('red', 'blue')
+    const solutions = find_build_solutions(
+      'yellow',
+      2,
+      init_energy_num({ blue: 1 }),
+      [g1, g2],
+      false
+    )
+    expect(solutions.length).toBe(1)
+    const { energy_num, gizmos } = solutions[0]
+    expect(energy_num).toEqual(init_energy_num({ blue: 1 }))
+    expect(new Set(gizmos)).toEqual(new Set([g1, g2]))
+  })
+
+  test('double level3 & any converter', () => {
     const g1 = converter_level1('red', 'yellow')
     const g2 = converter_double_level3('red', ['blue', 'yellow'])
     const solutions = find_build_solutions(
@@ -143,5 +171,25 @@ describe('find_build_solutions', () => {
       false
     )
     expect(solutions.length).toBe(1)
+  })
+
+  test('bug case 2', () => {
+    const g1 = converter_level1('yellow', 'blue')
+    const g2 = converter_level1('red', 'blue')
+    const g3 = converter_double_level2('red', 'blue')
+
+    const solutions = find_build_solutions(
+      'yellow',
+      2,
+      init_energy_num({ red: 1, blue: 1, black: 1, yellow: 3 }),
+      [g1, g2, g3],
+      false
+    )
+    expect(solutions.length).toBe(4)
+    const { energy_num, gizmos } = solutions.find(
+      s => s.energy_num.yellow === 0
+    )!
+    expect(energy_num).toEqual(init_energy_num({ blue: 1 }))
+    expect(new Set(gizmos)).toEqual(new Set([g1, g2, g3]))
   })
 })

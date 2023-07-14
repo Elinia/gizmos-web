@@ -261,9 +261,7 @@ export function find_build_solutions(
         if (raw_cost > 0) {
           solution.energy_num[energy_type] += raw_cost
         }
-        if (!apply_solution(solution)) {
-          continue
-        }
+        apply_solution(solution)
       }
     }
 

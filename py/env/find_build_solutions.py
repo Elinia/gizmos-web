@@ -217,8 +217,7 @@ def find_build_solutions(
                 solution = clone_solution(ts)
                 if raw_cost > 0:
                     solution['energy_num'][energy_type] += raw_cost
-                if not apply_solution(solution):
-                    continue
+                apply_solution(solution)
 
         # try to use a gizmo
         for gizmo in ts['avail_gizmos']:
