@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { flip } from 'svelte/animate'
   import { _ } from 'svelte-i18n'
   import { BuildMethod, type GizmoLevel } from 'gizmos-env/common'
   import { ActionType } from 'gizmos-env/GizmosEnv'
@@ -7,6 +8,7 @@
   import { render_level } from '$lib/helpers.js'
   import type { GizmosClient } from '$lib/client.js'
   import type { GizmosGame } from '$lib/game.js'
+  import { send } from '$lib/transition.js'
 
   export let game: GizmosGame
 
@@ -56,12 +58,12 @@
             {$_('remain')}: {$observation.gizmos_pool_num[level]}
           </div>
         </button>
-        {#each $observation.gizmos_board[level] as gizmo}
+        {#each $observation.gizmos_board[level] as gizmo (gizmo.id)}
           {@const solutions = $is_avail[ActionType.BUILD]
             ? $env.build_solutions(gizmo.id, BuildMethod.DIRECTLY)
             : []}
           {@const can_build = solutions.length > 0}
-          <div>
+          <div animate:flip={{ duration: 200 }} out:send={{ key: gizmo.id }}>
             <Gizmo info={gizmo} />
             <button
               class:avail={can_build}

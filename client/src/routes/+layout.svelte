@@ -33,4 +33,8 @@
   .avail {
     @apply outline outline-2 outline-red-500/50 -outline-offset-1;
   }
+
+  dialog {
+    @apply p-4 rounded-lg;
+  }
 </style>

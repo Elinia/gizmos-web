@@ -12,6 +12,7 @@
   import PlayerState from './PlayerState.svelte'
   import type { GizmosClient } from '$lib/client.js'
   import type { GizmosGame } from '$lib/game.js'
+  import { send } from '$lib/transition.js'
 
   const noop = () => undefined
 
@@ -185,7 +186,7 @@
                 : []}
               {@const can_build = solutions.length > 0}
               {@const can_file = $is_avail[ActionType.FILE_FROM_RESEARCH]}
-              <div>
+              <div out:send={{ key: gizmo.id }}>
                 <Gizmo info={gizmo} />
                 <button
                   class:avail={can_build}

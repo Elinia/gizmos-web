@@ -5,6 +5,7 @@
   import type { BuildSolution } from 'gizmos-env/Player'
   import type { GizmosGame } from '$lib/game.js'
   import type { GizmosClient } from '$lib/client.js'
+  import { send, receive } from '$lib/transition.js'
   import Gizmo from './Gizmo.svelte'
   import PlayerState from './PlayerState.svelte'
 
@@ -46,7 +47,7 @@
             ? $env.build_solutions(gizmo, BuildMethod.FROM_FILED)
             : []}
           {@const can_build = solutions.length > 0}
-          <div>
+          <div in:receive={{ key: gizmo.id }} out:send={{ key: gizmo.id }}>
             <Gizmo info={gizmo} />
             <button
               class:avail={can_build}
@@ -66,13 +67,15 @@
           <div>{label}</div>
           {#each gizmos as gizmo}
             {@const can_use = $is_avail[ActionType.USE_GIZMO] && gizmo.active}
-            <button
-              class:avail={can_use}
-              disabled={!can_use}
-              on:click={() => use_gizmo(gizmo.id)}
-            >
-              <Gizmo info={gizmo} />
-            </button>
+            <div in:receive={{ key: gizmo.id }}>
+              <button
+                class:avail={can_use}
+                disabled={!can_use}
+                on:click={() => use_gizmo(gizmo.id)}
+              >
+                <Gizmo info={gizmo} />
+              </button>
+            </div>
           {/each}
         </div>
       {/each}
