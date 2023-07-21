@@ -90,8 +90,10 @@ for i in range(start_step, 10000000):
     p1 = ob['players'][1]
     for np in range(2):
         last = len(output[np]) - 1
-        v = 0
-        if ob['curr_stage'] != Stage.GAME_OVER or ob['truncated']:
+        v = 0.0
+        if ob['curr_stage'] != Stage.GAME_OVER:
+            v -= 10.0
+        elif ob['truncated']:
             v -= 2.0
         elif np == ob['result'][0]:
             # v += (27 - ob['curr_turn']) * 1.0
