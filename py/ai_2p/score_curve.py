@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-from statistics import mean
 f = open("TD3.log")
 cnt = 0
 x = []

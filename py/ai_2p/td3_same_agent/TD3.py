@@ -13,7 +13,8 @@ from .Feature import Feature
 if True:
     import sys
     import os
-    sys.path.append(os.path.realpath('../..'))
+
+    sys.path.append(os.path.realpath("../.."))
     from env.types import Observation, ActionType
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -25,19 +26,26 @@ class ReplayBuffer(object):
         self.ptr = [0, 0]
         self.size = [0, 0]
 
-        self.ids = [np.zeros((max_size, Feature.id_len)),
-                    np.zeros((max_size, Feature.id_len))]
-        self.ds = [np.zeros((max_size, Feature.dense_len)),
-                   np.zeros((max_size, Feature.dense_len))]
-        self.next_ids = [np.zeros((max_size, Feature.id_len)), np.zeros(
-            (max_size, Feature.id_len))]
-        self.next_ds = [np.zeros((max_size, Feature.dense_len)), np.zeros(
-            (max_size, Feature.dense_len))]
+        self.ids = [
+            np.zeros((max_size, Feature.id_len)),
+            np.zeros((max_size, Feature.id_len)),
+        ]
+        self.ds = [
+            np.zeros((max_size, Feature.dense_len)),
+            np.zeros((max_size, Feature.dense_len)),
+        ]
+        self.next_ids = [
+            np.zeros((max_size, Feature.id_len)),
+            np.zeros((max_size, Feature.id_len)),
+        ]
+        self.next_ds = [
+            np.zeros((max_size, Feature.dense_len)),
+            np.zeros((max_size, Feature.dense_len)),
+        ]
         self.reward = [np.zeros((max_size, 1)), np.zeros((max_size, 1))]
         self.done = [np.zeros((max_size, 1)), np.zeros((max_size, 1))]
 
-        self.device = torch.device(
-            "cuda" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def add(self, nowp, ids, ds, next_ids, next_ds, reward, done):
         self.ids[nowp][self.ptr[nowp]] = ids
@@ -67,7 +75,8 @@ class SharedEmbedding(nn.Module):
         super(SharedEmbedding, self).__init__()
         self.embedding_len = 8
         self.base_embedding = torch.nn.Parameter(
-            torch.randn(2000, self.embedding_len), requires_grad=True)
+            torch.randn(2000, self.embedding_len), requires_grad=True
+        )
 
     def embedding_look_up(self, ids):
         return self.base_embedding[ids, :]
@@ -131,7 +140,12 @@ class CriticV(nn.Module):
         self.l6 = nn.Linear(256, 1)
 
     def forward(self, state):
-        s = torch.cat([state, ], 1)
+        s = torch.cat(
+            [
+                state,
+            ],
+            1,
+        )
 
         v1 = F.relu(self.l1(s))
         v1 = F.relu(self.l2(v1))
@@ -143,7 +157,12 @@ class CriticV(nn.Module):
         return v1, v2
 
     def V1(self, state):
-        s = torch.cat([state, ], 1)
+        s = torch.cat(
+            [
+                state,
+            ],
+            1,
+        )
 
         v1 = F.relu(self.l1(s))
         v1 = F.relu(self.l2(v1))
@@ -153,14 +172,14 @@ class CriticV(nn.Module):
 
 class TD3(Feature):
     def __init__(
-            self,
-            idg,
-            path='TD3.pkl',
-            discount=0.999,
-            tau=0.005,
-            policy_noise=0.2,
-            noise_clip=0.5,
-            policy_freq=2
+        self,
+        idg,
+        path="TD3.pkl",
+        discount=0.999,
+        tau=0.005,
+        policy_noise=0.2,
+        noise_clip=0.5,
+        policy_freq=2,
     ):
         self.model_name = "TD3"
         self.idg = idg
@@ -168,7 +187,8 @@ class TD3(Feature):
 
         self.load(path)
         self.optimizer = torch.optim.Adam(
-            set(chain(self.criticA.parameters(), self.criticV.parameters())), lr=1e-4)
+            set(chain(self.criticA.parameters(), self.criticV.parameters())), lr=1e-4
+        )
 
         self.discount = discount
         self.tau = tau
@@ -182,25 +202,35 @@ class TD3(Feature):
         # print(id_feature.shape, dense_feature.shape)
         with torch.no_grad():
             _id_feature = torch.reshape(id_feature, (-1, Feature.id_len))
-            _dense_feature = torch.reshape(
-                dense_feature, (-1, Feature.dense_len))
-            ob_id = torch.reshape(
-                _id_feature[:, :Feature.ob_id_len], (-1, 1)).to(torch.long)
-            ob_dense = _dense_feature[:, :Feature.ob_dense_len]
+            _dense_feature = torch.reshape(dense_feature, (-1, Feature.dense_len))
+            ob_id = torch.reshape(_id_feature[:, : Feature.ob_id_len], (-1, 1)).to(
+                torch.long
+            )
+            ob_dense = _dense_feature[:, : Feature.ob_dense_len]
             action_id = torch.reshape(
-                _id_feature[:, -Feature.act_id_len:], (-1, 1)).to(torch.long)
-            action_dense = _dense_feature[:, -Feature.act_dense_len:]
+                _id_feature[:, -Feature.act_id_len :], (-1, 1)
+            ).to(torch.long)
+            action_dense = _dense_feature[:, -Feature.act_dense_len :]
             # print("1", ob_id, ob_dense)
             # print("2", action_id, action_dense)
-            batch_state = torch.concat([
-                self.embedding_table.embedding_look_up(
-                    ob_id).view(-1, Feature.ob_id_len * self.embedding_table.embedding_len),
-                ob_dense], dim=1)
-            batch_action = torch.concat([
-                self.embedding_table.embedding_look_up(action_id).view(
-                    -1, Feature.act_id_len * self.embedding_table.embedding_len),
-                action_dense
-            ], dim=1)
+            batch_state = torch.concat(
+                [
+                    self.embedding_table.embedding_look_up(ob_id).view(
+                        -1, Feature.ob_id_len * self.embedding_table.embedding_len
+                    ),
+                    ob_dense,
+                ],
+                dim=1,
+            )
+            batch_action = torch.concat(
+                [
+                    self.embedding_table.embedding_look_up(action_id).view(
+                        -1, Feature.act_id_len * self.embedding_table.embedding_len
+                    ),
+                    action_dense,
+                ],
+                dim=1,
+            )
             # print(batch_state.shape, batch_action.shape)
 
             A = self.criticA.A1(batch_state, batch_action)
@@ -219,27 +249,52 @@ class TD3(Feature):
         self.total_it += 1
         # Sample replay buffer
         ids, ds, next_ids, next_ds, reward, done = replay_buffer.sample(
-            nowp, batch_size)
+            nowp, batch_size
+        )
         _id_feature = torch.reshape(ids, (-1, Feature.id_len))
         _dense_feature = torch.reshape(ds, (-1, Feature.dense_len))
-        ob_id = torch.reshape(
-            _id_feature[:, :Feature.ob_id_len], (-1, 1)).to(torch.long)
-        ob_dense = _dense_feature[:, :Feature.ob_dense_len]
-        action_id = torch.reshape(
-            _id_feature[:, -Feature.act_id_len:], (-1, 1)).to(torch.long)
-        action_dense = _dense_feature[:, -Feature.act_dense_len:]
-        state = torch.concat([self.embedding_table.embedding_look_up(
-            ob_id).view(-1, Feature.ob_id_len * self.embedding_table.embedding_len), ob_dense], dim=1)
-        action = torch.concat([self.embedding_table.embedding_look_up(
-            action_id).view(-1, Feature.act_id_len * self.embedding_table.embedding_len), action_dense], dim=1)
+        ob_id = torch.reshape(_id_feature[:, : Feature.ob_id_len], (-1, 1)).to(
+            torch.long
+        )
+        ob_dense = _dense_feature[:, : Feature.ob_dense_len]
+        action_id = torch.reshape(_id_feature[:, -Feature.act_id_len :], (-1, 1)).to(
+            torch.long
+        )
+        action_dense = _dense_feature[:, -Feature.act_dense_len :]
+        state = torch.concat(
+            [
+                self.embedding_table.embedding_look_up(ob_id).view(
+                    -1, Feature.ob_id_len * self.embedding_table.embedding_len
+                ),
+                ob_dense,
+            ],
+            dim=1,
+        )
+        action = torch.concat(
+            [
+                self.embedding_table.embedding_look_up(action_id).view(
+                    -1, Feature.act_id_len * self.embedding_table.embedding_len
+                ),
+                action_dense,
+            ],
+            dim=1,
+        )
         with torch.no_grad():
             _id_feature = torch.reshape(next_ids, (-1, Feature.id_len))
             _dense_feature = torch.reshape(next_ds, (-1, Feature.dense_len))
-            ob_id = torch.reshape(
-                _id_feature[:, :Feature.ob_id_len], (-1, 1)).to(torch.long)
-            ob_dense = _dense_feature[:, :Feature.ob_dense_len]
-            next_state = torch.concat([self.embedding_table.embedding_look_up(ob_id).view(-1,
-                                                                                          Feature.ob_id_len * self.embedding_table.embedding_len), ob_dense], dim=1)
+            ob_id = torch.reshape(_id_feature[:, : Feature.ob_id_len], (-1, 1)).to(
+                torch.long
+            )
+            ob_dense = _dense_feature[:, : Feature.ob_dense_len]
+            next_state = torch.concat(
+                [
+                    self.embedding_table.embedding_look_up(ob_id).view(
+                        -1, Feature.ob_id_len * self.embedding_table.embedding_len
+                    ),
+                    ob_dense,
+                ],
+                dim=1,
+            )
             # Compute the target Q value
             target_V1, target_V2 = self.criticV_target(next_state)
             target_V = torch.min(target_V1, target_V2)
@@ -249,9 +304,11 @@ class TD3(Feature):
         current_A1 = self.criticA.A1(state, action)
         current_V1, current_V2 = self.criticV(state)
         # Compute critic loss
-        critic_loss = F.mse_loss(current_A1, target_V) + \
-            + F.mse_loss(current_V1, target_V) + \
-            F.mse_loss(current_V2, target_V)
+        critic_loss = (
+            F.mse_loss(current_A1, target_V)
+            + +F.mse_loss(current_V1, target_V)
+            + F.mse_loss(current_V2, target_V)
+        )
         # critic_loss = F.mse_loss(
         #     current_A1 + current_V1, target_V) + F.mse_loss(current_A2 + current_V2, target_V)
 
@@ -266,12 +323,15 @@ class TD3(Feature):
             # Update the frozen target models
             # for param, target_param in zip(self.criticQ.parameters(), self.criticQ_target.parameters()):
             #     target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
-            for param, target_param in zip(self.criticV.parameters(), self.criticV_target.parameters()):
+            for param, target_param in zip(
+                self.criticV.parameters(), self.criticV_target.parameters()
+            ):
                 target_param.data.copy_(
-                    self.tau * param.data + (1 - self.tau) * target_param.data)
+                    self.tau * param.data + (1 - self.tau) * target_param.data
+                )
 
     def best_action(self, ob: Observation, eps=0, debug=False):
-        action_space = ob['action_space']
+        action_space = ob["action_space"]
 
         act = None
         ob_id, ob_dense = self.gen_ob_feature(ob)
@@ -280,18 +340,23 @@ class TD3(Feature):
         end_act = None
 
         for action in action_space:
-            if action['type'] == ActionType.END:
+            if action["type"] == ActionType.END:
                 end_act = action
                 continue
             act_id, act_dense = self.gen_action_feature(action)
             ti_id.append(copy.copy(ob_id + act_id))
             ti_dense.append(copy.copy(ob_dense + act_dense))
 
-        yhat = self.forward(torch.Tensor(
-            ti_id), torch.Tensor(ti_dense)).view(-1,)
+        yhat = self.forward(torch.Tensor(ti_id), torch.Tensor(ti_dense)).view(
+            -1,
+        )
         if debug:
-            print(json.dumps([{'v': float(x), **action_space[i]}
-                  for i, x in enumerate(yhat)], indent=2))
+            print(
+                json.dumps(
+                    [{"v": float(x), **action_space[i]} for i, x in enumerate(yhat)],
+                    indent=2,
+                )
+            )
         if eps > 0 and random.random() < eps:
             best_action = torch.rand(yhat.shape) / 1.0
         else:
@@ -306,25 +371,29 @@ class TD3(Feature):
         act_id, act_dense = self.gen_action_feature(act)
         return act, ob_id + act_id, list(map(float, ob_dense + act_dense))
 
-    def save(self, path='TD3.pkl'):
-        torch.save({
-            'critic_a_state_dict': self.criticA.state_dict(),
-            'critic_v_state_dict': self.criticV.state_dict(),
-            'embedding_table_state_dict': self.embedding_table.state_dict()
-        }, path)
+    def save(self, path="TD3.pkl"):
+        torch.save(
+            {
+                "critic_a_state_dict": self.criticA.state_dict(),
+                "critic_v_state_dict": self.criticV.state_dict(),
+                "embedding_table_state_dict": self.embedding_table.state_dict(),
+            },
+            path,
+        )
 
-    def load(self, path='TD3.pkl'):
+    def load(self, path="TD3.pkl"):
         self.embedding_table = SharedEmbedding()
         self.criticA = CriticA().to(device)
         self.criticV = CriticV().to(device)
         self.criticV_target = copy.deepcopy(self.criticV)
         if not os.path.exists(path):
-            print('[TD3] init model as {}'.format(path))
+            print("[TD3] init model as {}".format(path))
         else:
-            print('[TD3] load model from {}'.format(path))
+            print("[TD3] load model from {}".format(path))
             checkpoint = torch.load(path)
-            self.criticA.load_state_dict(checkpoint['critic_a_state_dict'])
-            self.criticV.load_state_dict(checkpoint['critic_v_state_dict'])
+            self.criticA.load_state_dict(checkpoint["critic_a_state_dict"])
+            self.criticV.load_state_dict(checkpoint["critic_v_state_dict"])
             self.embedding_table.load_state_dict(
-                checkpoint['embedding_table_state_dict'])
+                checkpoint["embedding_table_state_dict"]
+            )
             self.criticV_target = copy.deepcopy(self.criticV)

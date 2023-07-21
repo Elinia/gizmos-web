@@ -1,7 +1,8 @@
 {
   "cSpell.words": ["lget", "SARSA", "traj", "yhat"],
   "[python]": {
-    "editor.tabSize": 4
+    "editor.tabSize": 4,
+    "editor.defaultFormatter": "ms-python.black-formatter"
   },
   "i18n-ally.localesPaths": "client/src/locales",
   "i18n-ally.enabledFrameworks": ["svelte"],

@@ -9,57 +9,67 @@ if TYPE_CHECKING:
 
 
 class GizmoType(str, Enum):
-    PICK = 'PICK'
-    BUILD = 'BUILD'
-    UPGRADE = 'UPGRADE'
-    CONVERTER = 'CONVERTER'
-    FILE = 'FILE'
+    PICK = "PICK"
+    BUILD = "BUILD"
+    UPGRADE = "UPGRADE"
+    CONVERTER = "CONVERTER"
+    FILE = "FILE"
 
     def __str__(self) -> str:
         return self.value
 
 
 class NaEffect(TypedDict):
-    type: Literal['na']
+    type: Literal["na"]
 
 
 class FreeDrawEffect(TypedDict):
-    type: Literal['free_draw']
+    type: Literal["free_draw"]
     num: int
 
 
 class FreePickEffect(TypedDict):
-    type: Literal['free_pick']
+    type: Literal["free_pick"]
     num: int
 
 
 class AddPointTokenEffect(TypedDict):
-    type: Literal['add_point_token']
+    type: Literal["add_point_token"]
     num: int
 
 
 class ExtraFileEffect(TypedDict):
-    type: Literal['extra_file']
+    type: Literal["extra_file"]
 
 
 class ExtraResearchEffect(TypedDict):
-    type: Literal['extra_research']
+    type: Literal["extra_research"]
 
 
 class ExtraBuildEffect(TypedDict):
-    type: Literal['extra_build']
+    type: Literal["extra_build"]
     level: list[GizmoLevel]
 
 
 class EnergyAsPointEffect(TypedDict):
-    type: Literal['energy_as_point']
+    type: Literal["energy_as_point"]
 
 
 class TokenAsPointEffect(TypedDict):
-    type: Literal['token_as_point']
+    type: Literal["token_as_point"]
 
 
-Effect = NaEffect | FreeDrawEffect | FreePickEffect | AddPointTokenEffect | ExtraFileEffect | ExtraResearchEffect | ExtraBuildEffect | EnergyAsPointEffect | TokenAsPointEffect
+Effect = (
+    NaEffect
+    | FreeDrawEffect
+    | FreePickEffect
+    | AddPointTokenEffect
+    | ExtraFileEffect
+    | ExtraResearchEffect
+    | ExtraBuildEffect
+    | EnergyAsPointEffect
+    | TokenAsPointEffect
+)
 
 
 class GizmoBasic(TypedDict):
@@ -75,7 +85,7 @@ class GizmoInfo(TypedDict):
     id: int
     active: bool
     used: bool
-    where: Literal['unknown', 'board', 'research', 'file', 'player']
+    where: Literal["unknown", "board", "research", "file", "player"]
     belongs_to: int | None
 
 
@@ -91,33 +101,33 @@ class Gizmo:
     active: bool
     used: bool
 
-    where: Literal['excluded', 'pool', 'board', 'research', 'file', 'player']
+    where: Literal["excluded", "pool", "board", "research", "file", "player"]
     belongs_to: int | None
 
     @property
     def is_add_energy_effect(self):
-        return self.effect['type'] in ['free_draw', 'free_pick']
+        return self.effect["type"] in ["free_draw", "free_pick"]
 
     def assert_available(self):
         if not self.active:
-            raise Exception('gizmo not activated')
+            raise Exception("gizmo not activated")
         if self.used:
-            raise Exception('gizmo used')
+            raise Exception("gizmo used")
 
     def used_by(self, player: Player):
         self.assert_available()
-        if self.effect['type'] == 'free_draw':
-            self.free_draw(player, self.effect['num'])
-        elif self.effect['type'] == 'free_pick':
-            self.free_pick(player, self.effect['num'])
-        elif self.effect['type'] == 'add_point_token':
-            self.add_point_token(player, self.effect['num'])
-        elif self.effect['type'] == 'extra_file':
+        if self.effect["type"] == "free_draw":
+            self.free_draw(player, self.effect["num"])
+        elif self.effect["type"] == "free_pick":
+            self.free_pick(player, self.effect["num"])
+        elif self.effect["type"] == "add_point_token":
+            self.add_point_token(player, self.effect["num"])
+        elif self.effect["type"] == "extra_file":
             self.extra_file(player)
-        elif self.effect['type'] == 'extra_research':
+        elif self.effect["type"] == "extra_research":
             self.extra_research(player)
-        elif self.effect['type'] == 'extra_build':
-            self.extra_build(player, self.effect['level'])
+        elif self.effect["type"] == "extra_build":
+            self.extra_build(player, self.effect["level"])
         self.active = False
         self.used = True
 
@@ -129,24 +139,24 @@ class Gizmo:
             player.add_energy(energy)
 
     def free_pick(self, player: Player, num: int):
-        if len(player.env.state['energy_board']) <= 0:
+        if len(player.env.state["energy_board"]) <= 0:
             return
-        player.env.state['free_pick_num'] = num
+        player.env.state["free_pick_num"] = num
 
     def add_point_token(self, player: Player, num: int):
         player.point_token += num
 
     def extra_file(self, player: Player):
-        player.env.state['curr_stage'] = Stage.EXTRA_FILE
+        player.env.state["curr_stage"] = Stage.EXTRA_FILE
 
     def extra_research(self, player: Player):
         if player.research_num <= 0:
             return
-        player.env.state['curr_stage'] = Stage.EXTRA_RESEARCH
+        player.env.state["curr_stage"] = Stage.EXTRA_RESEARCH
 
     def extra_build(self, player: Player, level: list[GizmoLevel]):
-        player.env.state['free_build'] = {'level': level}
-        player.env.state['curr_stage'] = Stage.EXTRA_BUILD
+        player.env.state["free_build"] = {"level": level}
+        player.env.state["curr_stage"] = Stage.EXTRA_BUILD
 
     def reset_used(self):
         self.active = False
@@ -154,38 +164,40 @@ class Gizmo:
 
     def reset(self):
         self.reset_used()
-        self.where = 'excluded'
+        self.where = "excluded"
         self.belongs_to = None
 
     def get_value(self, player: Player):
-        if self.effect['type'] == 'token_as_point':
+        if self.effect["type"] == "token_as_point":
             return player.point_token
-        if self.effect['type'] == 'energy_as_point':
+        if self.effect["type"] == "energy_as_point":
             return player.total_energy_num
         return self.value
 
     @property
     def info(self) -> GizmoInfo:
         return {
-            'id': self.id,
-            'active': self.active,
-            'used': self.used,
-            'where': 'unknown' if self.where == 'excluded' or self.where == 'pool' else self.where,
-            'belongs_to': self.belongs_to,
+            "id": self.id,
+            "active": self.active,
+            "used": self.used,
+            "where": "unknown"
+            if self.where == "excluded" or self.where == "pool"
+            else self.where,
+            "belongs_to": self.belongs_to,
         }
 
     def __init__(self, **basic: GizmoBasic):
-        self.id = basic['id']
-        self.level = basic['level']
-        self.energy_type = basic['energy_type']
-        self.energy_cost = basic['energy_cost']
-        self.value = basic['value']
-        self.effect = basic.get('effect', {'type': 'na'})
+        self.id = basic["id"]
+        self.level = basic["level"]
+        self.energy_type = basic["energy_type"]
+        self.energy_cost = basic["energy_cost"]
+        self.value = basic["value"]
+        self.effect = basic.get("effect", {"type": "na"})
 
         self.active = False
         self.used = False
 
-        self.where = 'excluded'
+        self.where = "excluded"
         self.belongs_to = None
 
 
@@ -212,9 +224,9 @@ class PickGizmo(Gizmo):
 
 
 class WhenBuild(TypedDict):
-    energy: list[Energy] | Literal['any']
-    level: list[AllGizmoLevel] | Literal['any']
-    method: list[BuildMethod] | Literal['any']
+    energy: list[Energy] | Literal["any"]
+    level: list[AllGizmoLevel] | Literal["any"]
+    method: list[BuildMethod] | Literal["any"]
 
 
 class GizmoBuild(TypedDict):
@@ -225,16 +237,35 @@ class BuildGizmo(Gizmo):
     type = GizmoType.BUILD
     when_build: WhenBuild
 
-    def is_satisfied(self, player: Player, level: GizmoLevel, energy: EnergyWithAny, method: BuildMethod) -> bool:
+    def is_satisfied(
+        self,
+        player: Player,
+        level: GizmoLevel,
+        energy: EnergyWithAny,
+        method: BuildMethod,
+    ) -> bool:
         return (
-            (self.when_build['level'] == 'any' or level in self.when_build['level']) and
-            (self.when_build['energy'] == 'any' or energy == 'any' or energy in self.when_build['energy']) and
-            (self.when_build['method'] == 'any' or method in self.when_build['method']) and
-            (self.effect['type'] != 'extra_file' or player.can_file) and
-            (self.effect['type'] != 'extra_research' or player.can_research)
+            (self.when_build["level"] == "any" or level in self.when_build["level"])
+            and (
+                self.when_build["energy"] == "any"
+                or energy == "any"
+                or energy in self.when_build["energy"]
+            )
+            and (
+                self.when_build["method"] == "any"
+                or method in self.when_build["method"]
+            )
+            and (self.effect["type"] != "extra_file" or player.can_file)
+            and (self.effect["type"] != "extra_research" or player.can_research)
         )
 
-    def on_build(self, player: Player, level: GizmoLevel, energy: EnergyWithAny, method: BuildMethod):
+    def on_build(
+        self,
+        player: Player,
+        level: GizmoLevel,
+        energy: EnergyWithAny,
+        method: BuildMethod,
+    ):
         if not self.is_satisfied(player, level, energy, method):
             return
         if not self.used:
@@ -263,13 +294,15 @@ class UpgradeGizmo(Gizmo):
 
     def __init__(self, **basic: GizmoBasic & GizmoUpgrade):
         super().__init__(**basic)
-        self.max_energy_num = basic.get('max_energy_num', 0)
-        self.max_file_num = basic.get('max_file_num', 0)
-        self.research_num = basic.get('research_num', 0)
+        self.max_energy_num = basic.get("max_energy_num", 0)
+        self.max_file_num = basic.get("max_file_num", 0)
+        self.research_num = basic.get("research_num", 0)
         self.build_from_filed_cost_reduction = basic.get(
-            'build_from_filed_cost_reduction', 0)
+            "build_from_filed_cost_reduction", 0
+        )
         self.build_from_research_cost_reduction = basic.get(
-            'build_from_research_cost_reduction', 0)
+            "build_from_research_cost_reduction", 0
+        )
 
 
 class FormulaSide(TypedDict):
@@ -277,7 +310,7 @@ class FormulaSide(TypedDict):
     num: int
 
 
-ConverterFormula = dict[Literal['from', 'to'], FormulaSide]
+ConverterFormula = dict[Literal["from", "to"], FormulaSide]
 
 
 class Prerequisite(TypedDict):
@@ -295,9 +328,8 @@ class ConverterGizmo(Gizmo):
     formulae: list[ConverterFormula]
 
     def is_satisfied(self, gizmo: Gizmo) -> bool:
-        return (
-            not self.used and
-            (not self.prerequisite or gizmo.level in self.prerequisite['level'])
+        return not self.used and (
+            not self.prerequisite or gizmo.level in self.prerequisite["level"]
         )
 
     def on_convert(self, gizmo: Gizmo):
@@ -307,8 +339,8 @@ class ConverterGizmo(Gizmo):
 
     def __init__(self, **basic: GizmoBasic & GizmoConverter):
         super().__init__(**basic)
-        self.prerequisite = basic.get('prerequisite')
-        self.formulae = basic['formulae']
+        self.prerequisite = basic.get("prerequisite")
+        self.formulae = basic["formulae"]
 
 
 class FileGizmo(Gizmo):

@@ -1,4 +1,3 @@
-
 import copy
 from typing import TypedDict
 
@@ -6,7 +5,8 @@ from typing import TypedDict
 if True:
     import sys
     import os
-    sys.path.append(os.path.realpath('..'))
+
+    sys.path.append(os.path.realpath(".."))
     from env.types import Observation, Action
 
 
@@ -28,21 +28,25 @@ def lget_attr(l: list, i: int, attr: str):
 
 
 def lget_id(l: list, i: int):
-    return lget_attr(l, i, 'id')
+    return lget_attr(l, i, "id")
 
 
 def lget_my_giz(l: list, i: int):
-    return '{}_{}_{}'.format(lget_attr(l, i, 'id'), lget_attr(l, i, 'used'), lget_attr(l, i, 'active'))
+    return "{}_{}_{}".format(
+        lget_attr(l, i, "id"), lget_attr(l, i, "used"), lget_attr(l, i, "active")
+    )
 
 
-def log_replay(replay: list[Observation | ActionLog],
-               observation: Observation | None = None,
-               action: ActionLog | None = None):
+def log_replay(
+    replay: list[Observation | ActionLog],
+    observation: Observation | None = None,
+    action: ActionLog | None = None,
+):
     if observation == None:
         if action == None:
             return
         replay.append(copy.deepcopy(action))
     else:
         ob = copy.deepcopy(observation)
-        del ob['gizmos']
+        del ob["gizmos"]
         replay.append(ob)
