@@ -15,7 +15,6 @@ class BuildSolution(TypedDict):
 
 
 class TmpBuildSolution(TypedDict):
-    energy_cost: int
     avail_energy: dict[Energy, int]
     avail_gizmos: list[ConverterGizmo]
     extra_energy: dict[EnergyWithAny, int]
@@ -49,7 +48,6 @@ def clone_solution(ts: TmpBuildSolution) -> BuildSolution:
 
 def clone_ts(ts: TmpBuildSolution) -> TmpBuildSolution:
     return {
-        "energy_cost": ts["energy_cost"],
         "avail_energy": {
             "red": ts["avail_energy"]["red"],
             "yellow": ts["avail_energy"]["yellow"],
@@ -148,7 +146,6 @@ def find_build_solutions(
     tmp_solutions: SimpleQueue[TmpBuildSolution] = SimpleQueue()
     tmp_solutions.put(
         {
-            "energy_cost": energy_cost,
             "avail_energy": avail_energy.copy(),
             "avail_gizmos": avail_gizmos.copy(),
             "extra_energy": {"red": 0, "yellow": 0, "blue": 0, "black": 0, "any": 0},

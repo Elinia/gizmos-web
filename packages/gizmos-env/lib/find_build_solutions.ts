@@ -5,7 +5,6 @@ import type { BuildSolution } from './Player'
 import { list_compose, proper_subsets } from './utils'
 
 type TmpBuildSolution = {
-  energy_cost: number
   avail_energy: Record<Energy, number>
   avail_gizmos: ConverterGizmo[]
   extra_energy: Record<EnergyWithAny, number>
@@ -37,7 +36,6 @@ function clone_solution(solution: BuildSolution | TmpBuildSolution) {
 
 function clone_ts(ts: TmpBuildSolution): TmpBuildSolution {
   return {
-    energy_cost: ts.energy_cost,
     avail_energy: {
       red: ts.avail_energy.red,
       yellow: ts.avail_energy.yellow,
@@ -179,7 +177,6 @@ export function find_build_solutions(
 ) {
   const tmp_solutions = new Q<TmpBuildSolution>([
     {
-      energy_cost,
       avail_energy: { ...avail_energy },
       avail_gizmos: [...avail_gizmos],
       extra_energy: { red: 0, yellow: 0, blue: 0, black: 0, any: 0 },
