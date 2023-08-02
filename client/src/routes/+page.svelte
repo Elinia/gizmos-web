@@ -3,6 +3,8 @@
   import { _ } from 'svelte-i18n'
   import { random_int } from 'gizmos-env/utils'
   import LocaleSwitch from './LocaleSwitch.svelte'
+  import RuleBook from './RuleBook.svelte'
+  import ListOfEffects from './ListOfEffects.svelte'
   import Game from './Game.svelte'
   import { GizmosClient } from '$lib/client.js'
 
@@ -39,21 +41,15 @@
 </script>
 
 <div class="flex flex-col gap-2">
-  <LocaleSwitch />
-  <div>
-    {$_('connection_status.title')}:
-    <span
-      class:status-red={$socket_status === 'red'}
-      class:status-green={$socket_status === 'green'}
-    >
-      {$_(`connection_status.value.${$socket_status}`)}
-    </span>
+  <div class="text-center text-2xl font-bold">{$_('gizmos')}</div>
+  <div class="flex justify-center gap-2">
+    <RuleBook /> | <ListOfEffects />
   </div>
   {#if !$observation}
-    <div>
-      <input bind:value={name} />
+    <div class="flex gap-2">
+      <input class="shrink" bind:value={name} />
       <button class="btn" on:click={() => login(name)}>
-        {$_('join_as', { values: { name } })}
+        {$_('join')}
       </button>
       {#if $in_room}
         <button class="btn" on:click={() => ready()}>{$_('ready')}</button>
@@ -88,6 +84,18 @@
     {@const url = URL.createObjectURL(blob)}
     <a href={url} download="replay.json">{$_('replay')}</a>
   {/if}
+  <div class="fixed bottom-0 w-full px-2 flex justify-between bg-lime-100">
+    <div>
+      {$_('connection_status.title')}:
+      <span
+        class:status-red={$socket_status === 'red'}
+        class:status-green={$socket_status === 'green'}
+      >
+        {$_(`connection_status.value.${$socket_status}`)}
+      </span>
+    </div>
+    <LocaleSwitch />
+  </div>
 </div>
 
 <style lang="postcss">

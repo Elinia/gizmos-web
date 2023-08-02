@@ -42,47 +42,62 @@
         {$_('remain')}: {$observation.energy_pool_num}
       </div>
     </div>
-    {#each LEVELS as level}
-      <div class="gizmos justify-center">
-        <button
-          class="w-36"
-          class:avail={$is_avail[ActionType.RESEARCH]}
-          disabled={!$is_avail[ActionType.RESEARCH]}
-          on:click={() => research(level)}
-        >
-          <div class="font-bold">{render_level(level)}</div>
-          {#if $me}
-            <div>🔍×{$me.research_num}</div>
-          {/if}
-          <div class="text-xs">
-            {$_('remain')}: {$observation.gizmos_pool_num[level]}
-          </div>
-        </button>
-        {#each $observation.gizmos_board[level] as gizmo (gizmo.id)}
-          {@const solutions = $is_avail[ActionType.BUILD]
-            ? $env.build_solutions(gizmo.id, BuildMethod.DIRECTLY)
-            : []}
-          {@const can_build = solutions.length > 0}
-          <div animate:flip={{ duration: 200 }} out:send={{ key: gizmo.id }}>
-            <Gizmo info={gizmo} />
-            <button
-              class:avail={can_build}
-              disabled={!can_build}
-              on:click={() =>
-                show_build_dialog(gizmo.id, BuildMethod.DIRECTLY, solutions)}
-            >
-              🔧
-            </button>
-            <button
-              class:avail={$is_avail[ActionType.FILE]}
-              disabled={!$is_avail[ActionType.FILE]}
-              on:click={() => file(gizmo.id)}
-            >
-              📁
-            </button>
-          </div>
-        {/each}
-      </div>
-    {/each}
+    <div class="display-area">
+      {#each LEVELS as level}
+        <div class="gizmos justify-center">
+          <button
+            class="w-36"
+            class:avail={$is_avail[ActionType.RESEARCH]}
+            disabled={!$is_avail[ActionType.RESEARCH]}
+            on:click={() => research(level)}
+          >
+            <div class="font-bold">{render_level(level)}</div>
+            {#if $me}
+              <div>🔍×{$me.research_num}</div>
+            {/if}
+            <div class="text-xs">
+              {$_('remain')}: {$observation.gizmos_pool_num[level]}
+            </div>
+          </button>
+          {#each $observation.gizmos_board[level] as gizmo (gizmo.id)}
+            {@const solutions = $is_avail[ActionType.BUILD]
+              ? $env.build_solutions(gizmo.id, BuildMethod.DIRECTLY)
+              : []}
+            {@const can_build = solutions.length > 0}
+            <div animate:flip={{ duration: 200 }} out:send={{ key: gizmo.id }}>
+              <Gizmo info={gizmo} />
+              <button
+                class:avail={can_build}
+                disabled={!can_build}
+                on:click={() =>
+                  show_build_dialog(gizmo.id, BuildMethod.DIRECTLY, solutions)}
+              >
+                🔧
+              </button>
+              <button
+                class:avail={$is_avail[ActionType.FILE]}
+                disabled={!$is_avail[ActionType.FILE]}
+                on:click={() => file(gizmo.id)}
+              >
+                📁
+              </button>
+            </div>
+          {/each}
+        </div>
+      {/each}
+    </div>
   </div>
 {/if}
+
+<style lang="postcss">
+  .display-area {
+    @apply flex flex-col gap-2 items-center;
+
+    :global(.sm) & {
+      @apply flex-row-reverse items-start;
+      .gizmos {
+        @apply h-auto flex-1;
+      }
+    }
+  }
+</style>

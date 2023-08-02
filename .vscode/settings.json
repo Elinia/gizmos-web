@@ -1,5 +1,5 @@
 {
-  "cSpell.words": ["lget", "SARSA", "traj", "yhat"],
+  "cSpell.words": ["lget", "Rulebook", "SARSA", "traj", "yhat"],
   "[python]": {
     "editor.tabSize": 4,
     "editor.defaultFormatter": "ms-python.black-formatter"

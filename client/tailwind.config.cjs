@@ -2,6 +2,11 @@ const config = {
   content: ['./src/**/*.{html,js,svelte,ts}'],
 
   theme: {
+    screens: {
+      sm: '0rem',
+      md: '48rem',
+      lg: '72rem',
+    },
     extend: {
       fontSize: {
         '2xs': [

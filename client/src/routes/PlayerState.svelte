@@ -7,7 +7,7 @@
   export let env: GizmosEnv
 </script>
 
-<div class="flex gap-2">
+<div class="flex flex-wrap gap-2 sm:gap-1">
   <div class="font-bold" title="estimated score">🏆: {player.score}</div>
   <div>
     <span title="Gizmos count">

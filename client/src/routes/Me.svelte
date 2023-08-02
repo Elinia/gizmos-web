@@ -33,8 +33,8 @@
     { label: $_('build'), gizmos: $me.build_gizmos },
   ]}
   <PlayerState env={$env} player={$me} />
-  <div class="flex gap-2">
-    <div class="flex flex-col gap-2 border-2 border-blue-300 p-2 rounded-md">
+  <div class="gizmos-area">
+    <div class="gizmos-field flex items-center lg:flex-col gap-2 p-2">
       <div>
         📁 ({$me.filed.length}/{$me.max_file_num > 0
           ? $me.max_file_num
@@ -61,9 +61,9 @@
         {/each}
       </div>
     </div>
-    <div class="grid grid-cols-5 gap-2 border-2 border-blue-300 p-2 rounded-md">
+    <div class="gizmos-field gizmos-main-field">
       {#each my_gizmos as { label, gizmos }}
-        <div class="flex flex-col gap-2">
+        <div class="gizmos-type-field">
           <div>{label}</div>
           {#each gizmos as gizmo}
             {@const can_use = $is_avail[ActionType.USE_GIZMO] && gizmo.active}
@@ -98,3 +98,36 @@
     </button>
   </div>
 {/if}
+
+<style lang="postcss">
+  .gizmos-area {
+    @apply flex gap-2;
+
+    :global(.sm) &,
+    :global(.md) & {
+      @apply gap-1 flex-col;
+    }
+  }
+  .gizmos-field {
+    @apply border-2 border-blue-300 rounded-md;
+  }
+  .gizmos-main-field {
+    @apply grid gap-2 p-2;
+
+    :global(.sm) & {
+      @apply auto-rows-auto;
+    }
+
+    :global(.md) &,
+    :global(.lg) & {
+      @apply grid-cols-5;
+    }
+  }
+  .gizmos-type-field {
+    @apply flex flex-col items-center gap-2;
+
+    :global(.sm) & {
+      @apply flex-row flex-wrap;
+    }
+  }
+</style>

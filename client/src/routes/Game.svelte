@@ -97,13 +97,12 @@
 
 {#if ongoing && $observation && $env}
   <div class:pending={$pending}>
-    <div>
+    <div class="top-0 sticky z-10 bg-lime-100 flex justify-between px-2">
       <span>{$_('stage')}: {$observation.curr_stage}</span>
       <span>
         {$_('curr_player')}: {$player_list[$observation.curr_player_index].name}
       </span>
     </div>
-
     <div class="game-board">
       <div class="area me">
         <Me {game} {use_gizmo} {give_up} {end} {show_build_dialog} />
@@ -225,18 +224,55 @@
 {/if}
 
 <style lang="postcss">
-  .game-board {
-    @apply grid gap-4 p-4;
-    grid-template-columns: 48em minmax(0, 1fr);
-    grid-template-rows: auto auto auto;
-    grid-template-areas:
-      'me me'
-      'board log'
-      'players players';
+  .area {
+    @apply bg-blue-200 flex flex-col p-2 gap-2;
+    :global(.lg) & {
+      @apply rounded-md;
+    }
+    :global(.sm) & {
+      @apply p-1 gap-1;
+    }
   }
 
-  .area {
-    @apply rounded-md bg-blue-200 p-2 flex flex-col gap-2;
+  .game-board {
+    @apply grid;
+    :global(.lg) & {
+      @apply gap-4 p-4;
+      grid-template-columns: 48em minmax(0, 1fr);
+      grid-template-rows: repeat(3, auto);
+      grid-template-areas:
+        'me me'
+        'board log'
+        'players players';
+    }
+    :global(.sm) &,
+    :global(.md) & {
+      @apply gap-1;
+      grid-template-rows: repeat(4, auto);
+      grid-template-areas:
+        'me'
+        'board'
+        'players'
+        'log';
+    }
+  }
+
+  :global(.md) {
+    .me,
+    .board,
+    .log,
+    .players {
+      zoom: 0.9;
+    }
+  }
+
+  :global(.sm) {
+    .me,
+    .board,
+    .log,
+    .players {
+      zoom: 0.7;
+    }
   }
 
   .me {
