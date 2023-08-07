@@ -4,7 +4,7 @@
   import { BuildMethod } from 'gizmos-env/common'
   import { ActionType } from 'gizmos-env/GizmosEnv'
   import type { BuildSolution, PlayerInfo } from 'gizmos-env/Player'
-  import Me from './Me.svelte'
+  import MyDashboard from './MyDashboard.svelte'
   import Board from './Board.svelte'
   import Gizmo from './Gizmo.svelte'
   import Energy from './Energy.svelte'
@@ -104,8 +104,8 @@
       </span>
     </div>
     <div class="game-board">
-      <div class="area me">
-        <Me {game} {use_gizmo} {give_up} {end} {show_build_dialog} />
+      <div class="area my-dashboard">
+        <MyDashboard {game} {use_gizmo} {give_up} {end} {show_build_dialog} />
       </div>
       <div class="area board">
         <Board {game} {pick} {file} {research} {show_build_dialog} />
@@ -226,39 +226,43 @@
 <style lang="postcss">
   .area {
     @apply bg-blue-200 flex flex-col p-2 gap-2;
-    :global(.lg) & {
-      @apply rounded-md;
+    @screen lg {
+      & {
+        @apply rounded-md;
+      }
     }
-    :global(.sm) & {
+    @screen sm {
       @apply p-1 gap-1;
     }
   }
 
   .game-board {
     @apply grid;
-    :global(.lg) & {
-      @apply gap-4 p-4;
-      grid-template-columns: 48em minmax(0, 1fr);
-      grid-template-rows: repeat(3, auto);
-      grid-template-areas:
-        'me me'
-        'board log'
-        'players players';
+
+    @screen lg {
+        @apply gap-4 p-4;
+        grid-template-columns: 48rem minmax(0, 1fr);
+        grid-template-rows: repeat(3, auto);
+        grid-template-areas:
+          'my-dashboard my-dashboard'
+          'board log'
+          'players players';
     }
-    :global(.sm) &,
-    :global(.md) & {
+
+    @screen lt-lg {
       @apply gap-1;
+      grid-template-columns: 1fr;
       grid-template-rows: repeat(4, auto);
       grid-template-areas:
-        'me'
+        'my-dashboard'
         'board'
         'players'
         'log';
     }
   }
 
-  :global(.md) {
-    .me,
+  @screen at-md {
+    .my-dashboard,
     .board,
     .log,
     .players {
@@ -266,8 +270,8 @@
     }
   }
 
-  :global(.sm) {
-    .me,
+  @screen at-sm {
+    .my-dashboard,
     .board,
     .log,
     .players {
@@ -275,8 +279,8 @@
     }
   }
 
-  .me {
-    grid-area: me;
+  .my-dashboard {
+    grid-area: my-dashboard;
   }
 
   .board {

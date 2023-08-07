@@ -37,7 +37,7 @@
         <span>{logEntry.name}:</span>
         {#if action.type === ActionType.PICK}
           <div>👌</div>
-          <div class={`w-5 h-5 rounded-full ${action.energy}`} />
+          <div class="w-5 h-5 rounded-full {action.energy}" />
         {:else if action.type === ActionType.FILE || action.type === ActionType.FILE_FROM_RESEARCH}
           <div>📁</div>
           <Gizmo stateless={true} info={gizmos[action.id].info} />

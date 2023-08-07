@@ -7,6 +7,6 @@
 {#each ALL_ENERGY_TYPES as energy}
   {@const num = energy_num[energy]}
   {#each new Array(num).fill(energy) as e}
-    <div class={`w-5 h-5 rounded-full ${e}`} />
+    <div class="w-5 h-5 rounded-full {e}" />
   {/each}
 {/each}

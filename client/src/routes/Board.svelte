@@ -33,7 +33,7 @@
       <div class="energy">
         {#each $observation.energy_board as energy}
           <button
-            class={`w-5 h-5 rounded-full ${energy}`}
+            class="w-5 h-5 rounded-full {energy}"
             on:click={() => pick(energy)}
           />
         {/each}
@@ -42,7 +42,7 @@
         {$_('remain')}: {$observation.energy_pool_num}
       </div>
     </div>
-    <div class="display-area">
+    <div class="board-display-area">
       {#each LEVELS as level}
         <div class="gizmos justify-center">
           <button
@@ -90,10 +90,10 @@
 {/if}
 
 <style lang="postcss">
-  .display-area {
+  .board-display-area {
     @apply flex flex-col gap-2 items-center;
 
-    :global(.sm) & {
+    @screen at-sm {
       @apply flex-row-reverse items-start;
       .gizmos {
         @apply h-auto flex-1;

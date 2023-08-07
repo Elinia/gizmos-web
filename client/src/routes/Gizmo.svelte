@@ -22,7 +22,7 @@
 
 <div class="gizmo" class:simple class:active class:used class:stateless>
   {#if !simple}
-    <div class={`text-white text-center ${gizmo.energy_type}`}>
+    <div class="text-white text-center {gizmo.energy_type}">
       <span>💰:{gizmo.energy_cost}</span>
       <span>⭐:{gizmo.value || 'X'}</span>
     </div>
@@ -56,7 +56,7 @@
         <span>
           {#if gizmo.when_build.energy !== 'any'}
             {#each gizmo.when_build.energy as energy}
-              <div class={`w-2.5 h-2.5 rounded-full ${energy}`} />
+              <div class="w-2.5 h-2.5 rounded-full {energy}" />
             {/each}
           {/if}
         </span>
@@ -75,11 +75,11 @@
             <span class="w-0.5 h-5 ml-2 mr-2 bg-gray-600" />
           {/if}
           {#each new Array(formula.from.num).fill(formula.from.energy) as energy}
-            <span class={`w-4 h-4 rounded-full ${energy}`} />
+            <span class="w-4 h-4 rounded-full {energy}" />
           {/each}
           <span class="ml-0.5 mr-0.5">→</span>
           {#each new Array(formula.to.num).fill(formula.to.energy) as energy}
-            <span class={`w-4 h-4 rounded-full ${energy}`} />
+            <span class="w-4 h-4 rounded-full {energy}" />
           {/each}
         {/each}
       {/if}
@@ -121,7 +121,7 @@
         <span>👌</span>
         <span>
           {#each gizmo.when_pick as energy}
-            <div class={`w-2.5 h-2.5 rounded-full ${energy}`} />
+            <div class="w-2.5 h-2.5 rounded-full {energy}" />
           {/each}
         </span>
       </div>

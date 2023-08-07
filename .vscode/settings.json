@@ -1,10 +1,11 @@
 {
-  "cSpell.words": ["lget", "Rulebook", "SARSA", "traj", "yhat"],
+  "cSpell.words": ["lget", "Rulebook", "SARSA", "traj", "unocss", "yhat"],
   "[python]": {
     "editor.tabSize": 4,
     "editor.defaultFormatter": "ms-python.black-formatter"
   },
   "i18n-ally.localesPaths": "client/src/locales",
   "i18n-ally.enabledFrameworks": ["svelte"],
-  "i18n-ally.keystyle": "nested"
+  "i18n-ally.keystyle": "nested",
+  "unocss.root": "client"
 }

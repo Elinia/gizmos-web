@@ -103,8 +103,7 @@
   .gizmos-area {
     @apply flex gap-2;
 
-    :global(.sm) &,
-    :global(.md) & {
+    @screen lt-lg {
       @apply gap-1 flex-col;
     }
   }
@@ -114,19 +113,18 @@
   .gizmos-main-field {
     @apply grid gap-2 p-2;
 
-    :global(.sm) & {
+    @screen at-sm {
       @apply auto-rows-auto;
     }
 
-    :global(.md) &,
-    :global(.lg) & {
+    @screen md {
       @apply grid-cols-5;
     }
   }
   .gizmos-type-field {
     @apply flex flex-col items-center gap-2;
 
-    :global(.sm) & {
+    @screen at-sm {
       @apply flex-row flex-wrap;
     }
   }
